@@ -1,0 +1,10 @@
+{
+"SpaProxyServer": {
+"ServerUrl": "https://localhost:13195",
+"RedirectUrl": "",
+"LaunchCommand": "npm run dev",
+"WorkingDirectory": "C:\\Users\\C.V\\source\\repos\\ECMS_StudyZone\\ECMS_StudyZone.Server\\..\\ecms_studyzone.client",
+"MaxTimeoutInSeconds": "120",
+"KeepRunning": "false"
+}
+}
