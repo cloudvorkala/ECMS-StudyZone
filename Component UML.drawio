@@ -1134,9 +1134,6 @@
         <mxCell id="wfxb_6UqcgdCeldZsZun-266" value="" style="ellipse;whiteSpace=wrap;html=1;align=center;aspect=fixed;fillColor=none;strokeColor=none;resizable=0;perimeter=centerPerimeter;rotatable=0;allowArrows=0;points=[];outlineConnect=1;" vertex="1" parent="1">
           <mxGeometry x="1825" y="670" width="10" height="10" as="geometry" />
         </mxCell>
-        <mxCell id="wfxb_6UqcgdCeldZsZun-267" value="Text" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="450" y="-220" width="60" height="30" as="geometry" />
-        </mxCell>
         <mxCell id="wfxb_6UqcgdCeldZsZun-269" value="Authentication&lt;div&gt;Requests&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="435" y="10" width="60" height="30" as="geometry" />
         </mxCell>
