@@ -65,7 +65,7 @@
           <mxGeometry x="743" y="170" width="166" height="2608" as="geometry" />
         </mxCell>
         <mxCell id="WgWyb6Yagcqge01GWtN0-37" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" parent="idUogFl2Q6J1yMuT-vOO-68" vertex="1">
-          <mxGeometry x="66" y="154" width="34" height="150" as="geometry" />
+          <mxGeometry x="66" y="220" width="34" height="84" as="geometry" />
         </mxCell>
         <mxCell id="WgWyb6Yagcqge01GWtN0-38" value="" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" parent="idUogFl2Q6J1yMuT-vOO-68" vertex="1">
           <mxGeometry x="66" y="430" width="34" height="90" as="geometry" />
@@ -173,7 +173,7 @@
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="idUogFl2Q6J1yMuT-vOO-86" value="Navigate to mentor browse page" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;entryX=0.059;entryY=0.264;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="WgWyb6Yagcqge01GWtN0-37" edge="1" target="WgWyb6Yagcqge01GWtN0-28">
+        <mxCell id="idUogFl2Q6J1yMuT-vOO-86" value="Click mentor browse" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;entryX=0.059;entryY=0.264;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="J9RzpsjLn1UgFUo37keO-5" edge="1" target="WgWyb6Yagcqge01GWtN0-28">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="840" y="359" />
@@ -582,15 +582,6 @@
             <Array as="points" />
             <mxPoint x="600" y="300" as="sourcePoint" />
             <mxPoint x="367.5" y="300" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="J9RzpsjLn1UgFUo37keO-3" value="Click browse mentor" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="370.5" y="340" />
-            </Array>
-            <mxPoint x="366.5" y="340" as="sourcePoint" />
-            <mxPoint x="809.5" y="340" as="targetPoint" />
           </mxGeometry>
         </mxCell>
       </root>
