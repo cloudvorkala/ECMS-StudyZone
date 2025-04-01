@@ -308,13 +308,13 @@
             <mxPoint x="60" y="959" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="idUogFl2Q6J1yMuT-vOO-102" value="Select time slot" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" parent="1" edge="1">
+        <mxCell id="idUogFl2Q6J1yMuT-vOO-102" value="Select time slot" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" parent="1" target="WgWyb6Yagcqge01GWtN0-40" edge="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="555" y="1011" />
             </Array>
             <mxPoint x="60" y="1010" as="sourcePoint" />
-            <mxPoint x="980" y="1010" as="targetPoint" />
+            <mxPoint x="970" y="1010" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="idUogFl2Q6J1yMuT-vOO-103" value="Display session details page" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" parent="1" edge="1">
