@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36" version="26.2.2">
   <diagram name="Page-1" id="13e1069c-82ec-6db2-03f1-153e76fe0fe0">
-    <mxGraphModel dx="2433" dy="1392" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="none" math="0" shadow="0">
+    <mxGraphModel dx="2068" dy="1183" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="none" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -290,11 +290,12 @@
             <mxPoint x="2960" y="855" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="idUogFl2Q6J1yMuT-vOO-100" value="Display available slots" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" parent="1" source="idUogFl2Q6J1yMuT-vOO-79" edge="1">
+        <mxCell id="idUogFl2Q6J1yMuT-vOO-100" value="Display available slots" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" parent="1" edge="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="1976" y="907" />
             </Array>
+            <mxPoint x="2910" y="907" as="sourcePoint" />
             <mxPoint x="1020" y="907" as="targetPoint" />
           </mxGeometry>
         </mxCell>
@@ -468,11 +469,12 @@
             <mxPoint x="3170" y="1895" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="idUogFl2Q6J1yMuT-vOO-120" value="Show notification success" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" parent="1" source="idUogFl2Q6J1yMuT-vOO-80" edge="1">
+        <mxCell id="idUogFl2Q6J1yMuT-vOO-120" value="Show notification success" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" parent="1" edge="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="2449" y="1947" />
             </Array>
+            <mxPoint x="3130" y="1947" as="sourcePoint" />
             <mxPoint x="1750" y="1947" as="targetPoint" />
           </mxGeometry>
         </mxCell>
