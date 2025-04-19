@@ -1,6 +1,6 @@
 // src/models/notification.model.ts
 import mongoose, { Document, Schema, Model, Types } from 'mongoose';
-import { IUserDocument } from './user.model';
+import { IUserDocument } from '../user.model';
 
 export enum NotificationType {
   SYSTEM = 'system',
