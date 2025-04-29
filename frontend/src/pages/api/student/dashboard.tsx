@@ -1,5 +1,5 @@
 // ✅ src/pages/api/student/dashboard.tsx
-// 学生 Dashboard 页面：显示推荐导师、预约记录、推荐时间等快捷入口
+// Student Dashboard 页面：显示学生欢迎信息与导航入口
 
 import React from 'react';
 import Link from 'next/link';
@@ -11,7 +11,7 @@ export default function StudentDashboard() {
         <h1 className="text-2xl font-bold mb-4 text-green-700">Welcome Student!</h1>
 
         <p className="mb-6 text-gray-700">
-          From here you can explore mentors, make bookings, and view recommended study times.
+          From here, you can book mentors, view your bookings, and access recommended sessions.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

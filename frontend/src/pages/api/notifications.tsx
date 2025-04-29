@@ -1,54 +1,74 @@
 // ✅ src/pages/api/notifications.tsx
-// 通知中心页面：导师接收学生预约请求，可接受或拒绝
+// 导师查看预约请求：支持接收/拒绝预约请求（前端页面展示）
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-// 模拟通知数据（后续接入后端 API）
-const mockNotifications = [
-  {
-    id: 1,
-    student: 'Alice Johnson',
-    requestedTime: '2025-04-21 10:00 AM',
-    status: 'pending',
-  },
-  {
-    id: 2,
-    student: 'Michael Lee',
-    requestedTime: '2025-04-22 3:00 PM',
-    status: 'pending',
-  },
-];
+interface NotificationItem {
+  id: number;
+  student: string;
+  requestedTime: string;
+  status: 'pending' | 'accepted' | 'declined';
+}
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
-  const handleResponse = (id: number, response: 'accepted' | 'declined') => {
-    setNotifications(prev =>
-      prev.map(n =>
-        n.id === id ? { ...n, status: response } : n
-      )
-    );
-    console.log(`Booking ${id} marked as ${response}`);
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch('/api/notifications');
+        const data = await res.json();
+        setNotifications(data);
+      } catch (err) {
+        console.error('Failed to fetch notifications', err);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
+  const handleResponse = async (id: number, action: 'accepted' | 'declined') => {
+    try {
+      const res = await fetch(`/api/notifications/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      if (!res.ok) throw new Error('Failed to respond');
+      const updated = await res.json();
+      setNotifications(prev =>
+        prev.map(n => (n.id === id ? { ...n, status: updated.status } : n))
+      );
+    } catch (err) {
+      console.error('Failed to update status', err);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
-        <h1 className="text-2xl font-bold text-purple-700 mb-6">Notifications</h1>
+        <h1 className="text-2xl font-bold text-purple-700 mb-6">Booking Requests</h1>
 
         {notifications.length === 0 ? (
-          <p className="text-gray-500">No new booking requests.</p>
+          <p className="text-gray-500">No pending requests.</p>
         ) : (
           <ul className="space-y-4">
             {notifications.map((n) => (
-              <li key={n.id} className="p-4 border rounded bg-gray-50 flex justify-between items-center">
+              <li
+                key={n.id}
+                className={`p-4 border rounded flex justify-between items-center ${
+                  n.status === 'pending'
+                    ? 'bg-yellow-100'
+                    : n.status === 'accepted'
+                    ? 'bg-green-100'
+                    : 'bg-red-100 text-gray-500'
+                }`}
+              >
                 <div>
-                  <p className="text-sm text-gray-700">
-                    <strong>{n.student}</strong> requested a session at <strong>{n.requestedTime}</strong>
+                  <p className="font-medium">
+                    {n.student} requested a session at {n.requestedTime}
                   </p>
-                  <p className="text-xs text-gray-500">Status: <span className={`font-semibold ${n.status === 'accepted' ? 'text-green-600' : n.status === 'declined' ? 'text-red-500' : 'text-yellow-600'}`}>{n.status}</span></p>
+                  <p className="text-sm">Status: <strong>{n.status}</strong></p>
                 </div>
-
                 {n.status === 'pending' && (
                   <div className="space-x-2">
                     <button
