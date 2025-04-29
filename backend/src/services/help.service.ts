@@ -1,4 +1,7 @@
 // src/services/help.service.ts
+
+import mongoose from 'mongoose';
+
 import HelpRequest, { 
     IHelpRequestDocument, 
     HelpRequestStatus,
@@ -10,7 +13,7 @@ import HelpRequest, {
     CreateHelpResponseDto,
     UpdateHelpRequestDto,
     HelpRequestsFilterDto
-  } from '../dtos/help.dto.ts';
+  } from '../dtos/help.dto' 
   import notificationService from './notification.service';
   
   export class HelpService {
@@ -38,7 +41,7 @@ import HelpRequest, {
       if (supportStaff) {
         // Notify support staff
         await notificationService.createNotification({
-          userId: supportStaff._id.toString(),
+          userId: supportStaff.id, // Already a string, no need for toString()
           message: `New help request: ${requestData.title}`,
           title: 'New Support Request',
           action: 'View Request',
@@ -162,7 +165,7 @@ import HelpRequest, {
         attachments: responseData.attachments || [],
         createdAt: new Date(),
         updatedAt: new Date()
-      } as IHelpResponseDocument;
+      } as unknown as IHelpResponseDocument;
       
       // Add response to help request
       helpRequest.responses.push(response);
@@ -176,7 +179,7 @@ import HelpRequest, {
         
         // If not assigned yet, assign to this responder
         if (!helpRequest.assignedTo && isSupport) {
-          helpRequest.assignedTo = responseData.responderId;
+          helpRequest.assignedTo = new mongoose.Types.ObjectId(responseData.responderId);
         }
       }
       
@@ -272,7 +275,7 @@ import HelpRequest, {
       }
       
       // Update assignee
-      helpRequest.assignedTo = assignToId;
+      helpRequest.assignedTo = new mongoose.Types.ObjectId(assignToId);
       
       // If status is open, change to in_progress
       if (helpRequest.status === HelpRequestStatus.OPEN) {
