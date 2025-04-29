@@ -34,8 +34,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100 p-6">
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
         <div className="flex flex-col items-center mb-6">
-          <Image src="/next.svg" alt="Logo" width={120} height={30} />
-          <h1 className="text-2xl font-bold mt-4">StudyZone Login</h1>
+          <h1 className="text-3xl font-extrabold tracking-wide text-blue-700">ECMS</h1>
+          <h2 className="text-2xl font-bold mt-2">StudyZone Login</h2>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
@@ -74,7 +74,7 @@ export default function LoginPage() {
 
         <p className="text-center text-sm text-gray-500 mt-4">
           New mentor?{' '}
-          <a href="/mentor-registration" className="text-blue-600 hover:underline">
+          <a href="/api/mentor-registration" className="text-blue-600 hover:underline">
             Apply here
           </a>
         </p>
