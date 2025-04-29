@@ -1,6 +1,6 @@
 // src/models/mentor.model.ts
 import mongoose, { Document, Schema, Model, Types } from 'mongoose';
-import { IUserDocument } from './user.model';
+import { IUserDocument } from '../services/user.model';
 
 export interface IMentor {
   user: Types.ObjectId | IUserDocument;
