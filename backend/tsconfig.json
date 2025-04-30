@@ -16,6 +16,9 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "moduleResolution": "node", // make import * as dotenv from 'dotenv' syntax right
+    "esModuleInterop": true, // let Nest and Mongoose modules find each other
+    "types": ["node"] // make vscode understand process.env
   }
 }
