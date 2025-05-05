@@ -25,19 +25,19 @@ export class User {
 
   @Prop({ type: [String], enum: Object.values(UserRole), default: [UserRole.USER] })
   roles: UserRole[];
-  
+
   @Prop()
   firstName?: string;
-  
+
   @Prop()
   lastName?: string;
-  
+
   @Prop()
   profileImageUrl?: string;
-  
+
   @Prop()
   bio?: string;
-  
+
   @Prop({ default: null })
   lastLogin: Date;
 
@@ -58,10 +58,10 @@ export const UserSchema = SchemaFactory.createForClass(User);
 // 添加中间件：保存前加密密码
 UserSchema.pre('save', async function(next) {
   const user = this as UserDocument;
-  
+
   // 仅当密码被修改或新用户时加密密码
   if (!user.isModified('password')) return next();
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(user.password, salt);

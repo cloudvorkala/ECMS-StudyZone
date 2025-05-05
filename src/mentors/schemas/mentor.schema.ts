@@ -7,9 +7,9 @@ export type MentorDocument = Mentor & Document;
 
 @Schema({ timestamps: true })
 export class Mentor {
-  @Prop({ 
-    type: MongooseSchema.Types.ObjectId, 
-    ref: 'User', 
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'User',
     required: true,
     unique: true
   })
@@ -44,7 +44,7 @@ export class Mentor {
 
   @Prop({ default: 'UTC' })
   timeZone: string;
-  
+
   // 计算平均评分的虚拟字段
   get averageRating(): number {
     if (this.ratingCount === 0) return 0;

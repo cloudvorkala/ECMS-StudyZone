@@ -9,7 +9,7 @@ export enum HelpRequestStatus {
   OPEN = 'open',
   IN_PROGRESS = 'in_progress',
   RESOLVED = 'resolved',
-  CLOSED = 'closed'
+  CLOSED = 'closed',
 }
 
 export enum HelpRequestCategory {
@@ -17,19 +17,19 @@ export enum HelpRequestCategory {
   BOOKING = 'booking',
   PAYMENT = 'payment',
   TECHNICAL = 'technical',
-  OTHER = 'other'
+  OTHER = 'other',
 }
 
 export enum HelpRequestPriority {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  URGENT = 'urgent'
+  URGENT = 'urgent',
 }
 
 export enum HelpRequestRefModel {
   BOOKING = 'Booking',
-  USER = 'User'
+  USER = 'User',
 }
 
 export interface HelpResponse {
@@ -43,10 +43,10 @@ export interface HelpResponse {
 
 @Schema({ timestamps: true })
 export class HelpRequest {
-  @Prop({ 
-    type: MongooseSchema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'User',
+    required: true,
   })
   user: User;
 
@@ -56,60 +56,66 @@ export class HelpRequest {
   @Prop({ required: true })
   issue: string;
 
-  @Prop({ 
-    type: String, 
-    enum: Object.values(HelpRequestCategory), 
-    default: HelpRequestCategory.OTHER 
+  @Prop({
+    type: String,
+    enum: Object.values(HelpRequestCategory),
+    default: HelpRequestCategory.OTHER,
   })
   category: HelpRequestCategory;
 
-  @Prop({ 
-    type: String, 
-    enum: Object.values(HelpRequestPriority), 
-    default: HelpRequestPriority.MEDIUM 
+  @Prop({
+    type: String,
+    enum: Object.values(HelpRequestPriority),
+    default: HelpRequestPriority.MEDIUM,
   })
   priority: HelpRequestPriority;
 
-  @Prop({ 
-    type: String, 
-    enum: Object.values(HelpRequestStatus), 
-    default: HelpRequestStatus.OPEN 
+  @Prop({
+    type: String,
+    enum: Object.values(HelpRequestStatus),
+    default: HelpRequestStatus.OPEN,
   })
   status: HelpRequestStatus;
 
-  @Prop({ 
-    type: MongooseSchema.Types.ObjectId, 
-    ref: 'User', 
-    default: null 
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'User',
+    default: null,
   })
   assignedTo?: User;
 
   @Prop({ type: Date, default: null })
   resolvedAt?: Date;
 
-  @Prop({ 
-    type: [{
-      responder: { type: MongooseSchema.Types.ObjectId, ref: 'User', required: true },
-      message: { type: String, required: true },
-      attachments: { type: [String], default: [] },
-      createdAt: { type: Date, default: Date.now },
-      updatedAt: { type: Date, default: Date.now }
-    }],
-    default: []
+  @Prop({
+    type: [
+      {
+        responder: {
+          type: MongooseSchema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        message: { type: String, required: true },
+        attachments: { type: [String], default: [] },
+        createdAt: { type: Date, default: Date.now },
+        updatedAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
   })
   responses: HelpResponse[];
 
-  @Prop({ 
-    type: MongooseSchema.Types.ObjectId, 
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
     refPath: 'onModel',
-    default: null 
+    default: null,
   })
   relatedTo?: MongooseSchema.Types.ObjectId;
 
-  @Prop({ 
-    type: String, 
+  @Prop({
+    type: String,
     enum: Object.values(HelpRequestRefModel),
-    default: null 
+    default: null,
   })
   onModel?: HelpRequestRefModel;
 }
@@ -122,10 +128,10 @@ HelpRequestSchema.set('toJSON', {
     ret.id = ret._id;
     delete ret._id;
     delete ret.__v;
-    
+
     // 转换响应中的ID
     if (ret.responses && ret.responses.length > 0) {
-      ret.responses = ret.responses.map(response => {
+      ret.responses = ret.responses.map((response) => {
         if (response._id) {
           response.id = response._id;
           delete response._id;
@@ -133,7 +139,7 @@ HelpRequestSchema.set('toJSON', {
         return response;
       });
     }
-    
+
     return ret;
   },
 });
