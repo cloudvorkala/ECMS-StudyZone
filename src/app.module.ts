@@ -6,18 +6,18 @@ import configuration from './config/configuration';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { MentorsModule } from './mentors/mentors.module';
-import { NotificationsModule } from './notifications/notifications.module';
-import { HelpRequestsModule } from './help-requests/help-requests.module';
+//import { NotificationsModule } from './notifications/notifications.module';
+//import { HelpRequestsModule } from './help-requests/help-requests.module';
 
 @Module({
   imports: [
-    // 配置模块
+    // ConfigModule
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
     }),
-    
-    // MongoDB连接
+
+    // MongoDB connection
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -27,13 +27,13 @@ import { HelpRequestsModule } from './help-requests/help-requests.module';
         useUnifiedTopology: true,
       }),
     }),
-    
-    // 功能模块
+
+    // Function module
     AuthModule,
     UsersModule,
     MentorsModule,
-    NotificationsModule,
-    HelpRequestsModule,
+    //NotificationsModule,
+    //HelpRequestsModule,
   ],
 })
 export class AppModule {}

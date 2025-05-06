@@ -11,7 +11,7 @@ export class Mentor {
     type: MongooseSchema.Types.ObjectId,
     ref: 'User',
     required: true,
-    unique: true
+    unique: true,
   })
   user: User;
 
@@ -54,13 +54,13 @@ export class Mentor {
 
 export const MentorSchema = SchemaFactory.createForClass(Mentor);
 
-// 添加虚拟属性
-MentorSchema.virtual('averageRating').get(function() {
+//
+MentorSchema.virtual('averageRating').get(function () {
   if (this.ratingCount === 0) return 0;
   return this.rating / this.ratingCount;
 });
 
-// 配置模式选项
+//
 MentorSchema.set('toJSON', {
   virtuals: true,
   transform: (doc, ret) => {

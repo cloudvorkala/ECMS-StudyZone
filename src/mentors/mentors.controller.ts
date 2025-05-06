@@ -29,7 +29,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { UserRole } from '../users/schemas/user.schema';
+import { User, UserRole } from '../users/schemas/user.schema';
 
 @ApiTags('mentors')
 @Controller('mentors')
@@ -52,7 +52,10 @@ export class MentorsController {
     status: 409,
     description: 'Conflict - user already has a mentor profile',
   })
-  async create(@CurrentUser() user, @Body() createMentorDto: CreateMentorDto) {
+  async create(
+    @CurrentUser() user: User,
+    @Body() createMentorDto: CreateMentorDto,
+  ) {
     return this.mentorsService.create(user.id, createMentorDto);
   }
 
@@ -108,7 +111,7 @@ export class MentorsController {
     status: 404,
     description: 'Mentor profile not found',
   })
-  async getOwnProfile(@CurrentUser() user) {
+  async getOwnProfile(@CurrentUser() user: User) {
     return this.mentorsService.findByUserId(user.id);
   }
 
@@ -126,7 +129,7 @@ export class MentorsController {
     description: 'Mentor profile not found',
   })
   async updateOwnProfile(
-    @CurrentUser() user,
+    @CurrentUser() user: User,
     @Body() updateMentorDto: UpdateMentorDto,
   ) {
     const mentor = await this.mentorsService.findByUserId(user.id);
@@ -146,7 +149,7 @@ export class MentorsController {
     status: 404,
     description: 'Mentor profile not found',
   })
-  async deleteOwnProfile(@CurrentUser() user) {
+  async deleteOwnProfile(@CurrentUser() user: User) {
     const mentor = await this.mentorsService.findByUserId(user.id);
     await this.mentorsService.remove(mentor._id.toString());
     return { message: 'Mentor profile deleted successfully' };
@@ -198,13 +201,13 @@ export class MentorsController {
     description: 'Mentor profile not found',
   })
   async updateAvailability(
-    @CurrentUser() user,
+    @CurrentUser() user: User,
     @Body() availabilityDtos: AvailabilityDto[],
   ) {
     const mentor = await this.mentorsService.findByUserId(user.id);
 
     const availability = await this.mentorsService.updateAvailability(
-      mentor._id.toString(),
+      mentor.id,
       availabilityDtos,
     );
 
