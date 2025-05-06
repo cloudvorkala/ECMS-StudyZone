@@ -8,7 +8,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { MongoError } from 'mongodb';
+//import { MongoError } from 'mongodb';
 
 @Catch(HttpException, Error)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -30,16 +30,31 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
-      } else if (typeof exceptionResponse === 'object') {
-        message = (exceptionResponse as any).message || message;
-        error = (exceptionResponse as any).error || error;
-      }
-    }
-    // 处理MongoDB错误
-    else if (exception instanceof MongoError) {
-      if (exception.code === 11000) {
-        status = HttpStatus.CONFLICT;
-        message = 'Duplicate key error';
+      } else if (
+        typeof exceptionResponse === 'object' &&
+        exceptionResponse !== null
+      ) {
+        // 定义一个接口来表示可能的响应结构
+        interface ErrorResponse {
+          message?: string | string[];
+          error?: string;
+        }
+
+        // use api but not any
+        const errorResponse = exceptionResponse as ErrorResponse;
+
+        // 处理可能是字符串或字符串数组的消息
+        if (errorResponse.message) {
+          if (Array.isArray(errorResponse.message)) {
+            message = errorResponse.message.join(', ');
+          } else {
+            message = errorResponse.message;
+          }
+        }
+
+        if (errorResponse.error) {
+          error = errorResponse.error;
+        }
       }
     }
     // 处理JWT错误

@@ -45,10 +45,15 @@ export class UsersService {
    * 创建新用户
    */
   async create(userData: Partial<User>): Promise<UserDocument> {
-    // 检查邮箱是否被使用
+    // 确保必要字段存在
+    if (!userData.email) {
+      throw new BadRequestException('Email is required');
+    }
+
+    // 现在 TypeScript 知道 email 不可能是 undefined
     const existingUser = await this.findByEmail(userData.email);
     if (existingUser) {
-      throw new ConflictException('Email is already in use');
+      throw new ConflictException('Email already exists');
     }
 
     // 创建新用户
@@ -80,6 +85,11 @@ export class UsersService {
       updateUserDto,
       { new: true, runValidators: true },
     );
+
+    //added null check
+    if (!updatedUser) {
+      throw new NotFoundException(`User with ID ${id} not found after update`);
+    }
 
     return updatedUser;
   }
