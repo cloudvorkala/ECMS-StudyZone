@@ -95,6 +95,16 @@ export default function MentorRegistration() {
             </select>
           </div>
 
+          {/* Password */}
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded"
+            required
+          />
+
           {/* Phone Number */}
           <input
             type="tel"
@@ -117,20 +127,10 @@ export default function MentorRegistration() {
 
           {/* Specialty Courses */}
           <textarea
-            placeholder="List your specialty courses"
+            placeholder="List your courses you are available to mentor for"
             value={specialty}
             onChange={(e) => setSpecialty(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded h-24"
-          />
-
-          {/* Password */}
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-            required
           />
 
           {/* Submit Button */}
