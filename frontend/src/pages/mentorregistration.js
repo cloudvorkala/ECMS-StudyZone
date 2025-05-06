@@ -1,3 +1,4 @@
+/*
 // pages/mentor-registration.js
 import { useState } from 'react';
 
@@ -32,7 +33,10 @@ export default function MentorRegistration() {
             className="w-full p-2 border border-gray-300 rounded"
             required
           />
-          {/* Add more form inputs as needed */}
+          
+         
+          // Add more form inputs as needed 
+          
           <button
             type="submit"
             className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
@@ -44,3 +48,4 @@ export default function MentorRegistration() {
     </div>
   );
 }
+*/
