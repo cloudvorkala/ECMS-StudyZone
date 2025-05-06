@@ -23,6 +23,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UserRole } from './schemas/user.schema';
+import { User } from './schemas/user.schema';
 
 @ApiTags('users')
 @Controller('users')
@@ -37,7 +38,7 @@ export class UsersController {
     status: 200,
     description: 'Returns the profile of the currently authenticated user',
   })
-  async getProfile(@CurrentUser() user) {
+  async getProfile(@CurrentUser() user: User) {
     return this.usersService.findById(user.id);
   }
 
@@ -50,7 +51,7 @@ export class UsersController {
     description: 'User profile updated successfully',
   })
   async updateProfile(
-    @CurrentUser() user,
+    @CurrentUser() user: User,
     @Body() updateUserDto: UpdateUserDto,
   ) {
     return this.usersService.update(user.id, updateUserDto);
@@ -64,7 +65,7 @@ export class UsersController {
     status: 200,
     description: 'User account deleted successfully',
   })
-  async deleteProfile(@CurrentUser() user) {
+  async deleteProfile(@CurrentUser() user: User) {
     await this.usersService.remove(user.id);
     return { message: 'User account deleted successfully' };
   }

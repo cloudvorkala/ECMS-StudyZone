@@ -24,6 +24,7 @@ import {
 } from './dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { User } from 'src/users/schemas/user.schema';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -74,7 +75,7 @@ export class AuthController {
       'Bad request - validation failed or current password incorrect',
   })
   async changePassword(
-    @CurrentUser() user,
+    @CurrentUser() user: User,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
     return this.authService.changePassword(user.id, changePasswordDto);
@@ -118,7 +119,7 @@ export class AuthController {
     status: 401,
     description: 'Unauthorized - invalid token',
   })
-  async getProfile(@CurrentUser() user) {
+  async getProfile(@CurrentUser() user: User) {
     return this.authService.getProfile(user.id);
   }
 
@@ -135,7 +136,7 @@ export class AuthController {
     status: 401,
     description: 'Unauthorized - invalid token',
   })
-  async refreshToken(@CurrentUser() user) {
+  async refreshToken(@CurrentUser() user: User) {
     return this.authService.refreshToken(user.id);
   }
 }

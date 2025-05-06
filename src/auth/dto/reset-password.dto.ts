@@ -13,7 +13,8 @@ export class ResetPasswordDto {
   @IsString({ message: 'New password must be a string' })
   @MinLength(8, { message: 'New password must be at least 8 characters long' })
   @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-    message: 'New password must contain at least 1 uppercase letter, 1 lowercase letter, and 1 number or special character',
+    message:
+      'New password must contain at least 1 uppercase letter, 1 lowercase letter, and 1 number or special character',
   })
   readonly newPassword: string;
 
