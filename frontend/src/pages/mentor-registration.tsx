@@ -1,13 +1,14 @@
-/*
-// pages/mentor-registration.js
+// pages/mentor-registration.tsx
 import { useState } from 'react';
 
 export default function MentorRegistration() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  // Add other form states as needed
+  // Specify that these are strings
+  const [name, setName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  // Add other form states with types as needed
 
-  const handleSubmit = (e) => {
+  // Type the event parameter for handleSubmit
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // Handle registration logic here
   };
@@ -33,10 +34,7 @@ export default function MentorRegistration() {
             className="w-full p-2 border border-gray-300 rounded"
             required
           />
-          
-         
-          // Add more form inputs as needed 
-          
+          {/* Add more form inputs as needed */}
           <button
             type="submit"
             className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
@@ -48,4 +46,3 @@ export default function MentorRegistration() {
     </div>
   );
 }
-*/
