@@ -10,7 +10,7 @@
 // export class AppModule {}
 
 import { Module } from '@nestjs/common';
-import { BookingsModule } from './bookings/bookings.module'; // 加上这一行
+import { BookingsModule } from './bookings/bookings.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
