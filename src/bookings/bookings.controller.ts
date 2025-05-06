@@ -3,28 +3,45 @@ import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
+// import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+// import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller('bookings')
-@UseGuards(JwtAuthGuard) // use JWT guard for all routes in this controller
+// @UseGuards(JwtAuthGuard) // use JWT guard for all routes in this controller
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
-  @Post()
-  create(@Body() dto: CreateBookingDto, @CurrentUser() user: any) {
-    return this.bookingsService.create(dto, user._id);
-  }
+//   @Post()
+//   create(@Body() dto: CreateBookingDto, @CurrentUser() user: any) {
+//     return this.bookingsService.create(dto, user._id);
+//   }
 
-  @Get()
-  findAll(@CurrentUser() user: any) {
-    return this.bookingsService.findByUserId(user._id);
-  }
+//   @Get()
+//   findAll(@CurrentUser() user: any) {
+//     return this.bookingsService.findByUserId(user._id);
+//   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.bookingsService.findOneIfOwnedByUser(id, user._id);
-  }
+//   @Get(':id')
+//   findOne(@Param('id') id: string, @CurrentUser() user: any) {
+//     return this.bookingsService.findOneIfOwnedByUser(id, user._id);
+//   }
+    @Post()
+    create(@Body() dto: CreateBookingDto) {
+    const mockUserId = 'mock-user-id'; // 临时代替 CurrentUser
+    return this.bookingsService.create(dto, mockUserId);
+    }
+
+    @Get()
+    findAll() {
+    const mockUserId = 'mock-user-id';
+    return this.bookingsService.findByUserId(mockUserId);
+    }
+
+    @Get(':id')
+    findOne(@Param('id') id: string) {
+    const mockUserId = 'mock-user-id';
+    return this.bookingsService.findOneIfOwnedByUser(id, mockUserId);
+    }
 
   @Put(':id')
   update(@Param('id') id: string, @Body() dto: UpdateBookingDto) {

@@ -16,6 +16,9 @@ export class Session {
 
   @Prop()
   rating?: number;
+
+  @Prop({ required: true })
+  createdBy: string; // User ID of the person who created the session
 }
 
 export const SessionSchema = SchemaFactory.createForClass(Session);
