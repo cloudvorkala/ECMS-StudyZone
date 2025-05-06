@@ -1,37 +1,49 @@
-// src/users/dto/update-user.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
+  IsNotEmpty,
   IsString,
   MinLength,
   MaxLength,
+  Matches,
   IsOptional,
 } from 'class-validator';
 
-export class UpdateUserDto {
+export class CreateUserDto {
   @ApiProperty({
     example: 'johndoe',
-    description: 'Updated username',
-    required: false,
+    description: 'Unique username for the user',
   })
-  @IsOptional()
+  @IsNotEmpty({ message: 'Username is required' })
   @IsString({ message: 'Username must be a string' })
   @MinLength(3, { message: 'Username must be at least 3 characters long' })
   @MaxLength(30, { message: 'Username cannot exceed 30 characters' })
-  username?: string;
+  username: string;
 
   @ApiProperty({
     example: 'john@example.com',
-    description: 'Updated email address',
-    required: false,
+    description: 'Email address of the user',
   })
-  @IsOptional()
+  @IsNotEmpty({ message: 'Email is required' })
   @IsEmail({}, { message: 'Please provide a valid email address' })
-  email?: string;
+  email: string;
+
+  @ApiProperty({
+    example: 'Password123!',
+    description: 'Password for user authentication',
+  })
+  @IsNotEmpty({ message: 'Password is required' })
+  @IsString({ message: 'Password must be a string' })
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
+    message:
+      'Password must contain at least 1 uppercase letter, 1 lowercase letter, and 1 number or special character',
+  })
+  password: string;
 
   @ApiProperty({
     example: 'John',
-    description: 'Updated first name',
+    description: 'First name of the user',
     required: false,
   })
   @IsOptional()
@@ -41,7 +53,7 @@ export class UpdateUserDto {
 
   @ApiProperty({
     example: 'Doe',
-    description: 'Updated last name',
+    description: 'Last name of the user',
     required: false,
   })
   @IsOptional()
@@ -51,7 +63,7 @@ export class UpdateUserDto {
 
   @ApiProperty({
     example: 'https://example.com/avatar.jpg',
-    description: 'Updated profile picture URL',
+    description: 'Profile picture URL',
     required: false,
   })
   @IsOptional()

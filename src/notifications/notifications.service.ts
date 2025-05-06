@@ -1,30 +1,34 @@
 // src/notifications/notifications.service.ts
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { 
-  Notification, 
-  NotificationDocument, 
+import {
+  Notification,
+  NotificationDocument,
   NotificationType,
-  NotificationRefModel
+  NotificationRefModel,
 } from './schemas/notification.schema';
-import { 
-  CreateNotificationDto, 
-  NotificationQueryDto 
-} from './dto';
+import { CreateNotificationDto, NotificationQueryDto } from './dto';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class NotificationsService {
   constructor(
-    @InjectModel(Notification.name) private notificationModel: Model<NotificationDocument>,
-    private usersService: UsersService
+    @InjectModel(Notification.name)
+    private notificationModel: Model<NotificationDocument>,
+    private usersService: UsersService,
   ) {}
 
   /**
    * 创建通知
    */
-  async create(createNotificationDto: CreateNotificationDto): Promise<NotificationDocument> {
+  async create(
+    createNotificationDto: CreateNotificationDto,
+  ): Promise<NotificationDocument> {
     const {
       userId,
       message,
@@ -33,7 +37,7 @@ export class NotificationsService {
       relatedTo,
       onModel,
       action,
-      actionUrl
+      actionUrl,
     } = createNotificationDto;
 
     // 验证用户ID
@@ -54,7 +58,7 @@ export class NotificationsService {
       relatedTo: relatedTo ? new Types.ObjectId(relatedTo) : undefined,
       onModel,
       action,
-      actionUrl
+      actionUrl,
     });
 
     return notification.save();
@@ -65,7 +69,7 @@ export class NotificationsService {
    */
   async findAllForUser(
     userId: string,
-    queryDto: NotificationQueryDto
+    queryDto: NotificationQueryDto,
   ): Promise<{
     notifications: NotificationDocument[];
     unreadCount: number;
@@ -96,13 +100,14 @@ export class NotificationsService {
 
     // 执行查询
     const [notifications, total, unreadCount] = await Promise.all([
-      this.notificationModel.find(query)
+      this.notificationModel
+        .find(query)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate('user', 'username email'),
       this.notificationModel.countDocuments(query),
-      this.notificationModel.countDocuments({ user: userId, isRead: false })
+      this.notificationModel.countDocuments({ user: userId, isRead: false }),
     ]);
 
     return {
@@ -110,7 +115,7 @@ export class NotificationsService {
       unreadCount,
       total,
       totalPages: Math.ceil(total / limit),
-      currentPage: page
+      currentPage: page,
     };
   }
 
@@ -125,11 +130,13 @@ export class NotificationsService {
 
     const notification = await this.notificationModel.findOne({
       _id: id,
-      user: userId
+      user: userId,
     });
 
     if (!notification) {
-      throw new NotFoundException(`Notification with ID ${id} not found or does not belong to the user`);
+      throw new NotFoundException(
+        `Notification with ID ${id} not found or does not belong to the user`,
+      );
     }
 
     return notification;
@@ -161,7 +168,7 @@ export class NotificationsService {
     // 更新所有未读通知
     const result = await this.notificationModel.updateMany(
       { user: userId, isRead: false },
-      { $set: { isRead: true } }
+      { $set: { isRead: true } },
     );
 
     return { count: result.modifiedCount };
@@ -176,7 +183,7 @@ export class NotificationsService {
 
     const result = await this.notificationModel.deleteOne({
       _id: id,
-      user: userId
+      user: userId,
     });
 
     return { deleted: result.deletedCount > 0 };
@@ -193,7 +200,7 @@ export class NotificationsService {
 
     const count = await this.notificationModel.countDocuments({
       user: userId,
-      isRead: false
+      isRead: false,
     });
 
     return { count };
@@ -206,7 +213,7 @@ export class NotificationsService {
     userId: string,
     bookingId: string,
     message: string,
-    title: string = 'Booking Update'
+    title: string = 'Booking Update',
   ): Promise<NotificationDocument> {
     return this.create({
       userId,
@@ -216,7 +223,7 @@ export class NotificationsService {
       relatedTo: bookingId,
       onModel: NotificationRefModel.BOOKING,
       action: 'View Booking',
-      actionUrl: `/bookings/${bookingId}`
+      actionUrl: `/bookings/${bookingId}`,
     });
   }
 
@@ -227,7 +234,7 @@ export class NotificationsService {
     userId: string,
     bookingId: string,
     message: string,
-    title: string = 'Upcoming Session'
+    title: string = 'Upcoming Session',
   ): Promise<NotificationDocument> {
     return this.create({
       userId,
@@ -237,7 +244,7 @@ export class NotificationsService {
       relatedTo: bookingId,
       onModel: NotificationRefModel.BOOKING,
       action: 'View Session',
-      actionUrl: `/bookings/${bookingId}`
+      actionUrl: `/bookings/${bookingId}`,
     });
   }
 
@@ -247,13 +254,13 @@ export class NotificationsService {
   async createSystemNotification(
     userId: string,
     message: string,
-    title: string = 'System Notification'
+    title: string = 'System Notification',
   ): Promise<NotificationDocument> {
     return this.create({
       userId,
       message,
       title,
-      type: NotificationType.SYSTEM
+      type: NotificationType.SYSTEM,
     });
   }
 
@@ -264,14 +271,14 @@ export class NotificationsService {
     userIds: string[],
     message: string,
     title: string,
-    type: NotificationType = NotificationType.SYSTEM
+    type: NotificationType = NotificationType.SYSTEM,
   ): Promise<NotificationDocument[]> {
-    const notificationPromises = userIds.map(userId => {
+    const notificationPromises = userIds.map((userId) => {
       return this.create({
         userId,
         message,
         title,
-        type
+        type,
       });
     });
 

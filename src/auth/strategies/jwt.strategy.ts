@@ -22,12 +22,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     try {
       // payload.sub 是用户ID
       const user = await this.usersService.findById(payload.sub);
-      
+
       // 如果找不到用户，拒绝访问
       if (!user) {
         throw new UnauthorizedException('User not found');
       }
-      
+
       // 返回用户信息(不包含敏感数据)
       return {
         id: user._id,

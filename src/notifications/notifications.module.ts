@@ -6,7 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { NotificationsGateway } from './gateways/notifications.gateway';
-import { Notification, NotificationSchema } from './schemas/notification.schema';
+import { Notification, NotificationSchema } from '.notification.schema';
 import { UsersModule } from '../users/users.module';
 
 @Module({
