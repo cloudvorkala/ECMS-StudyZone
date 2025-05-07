@@ -1,15 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Schema as MongooseSchema } from 'mongoose';
+import { User } from '../../users/schemas/user.schema';
 
 export type BookingDocument = Booking & Document;
 
 @Schema({ timestamps: true })
 export class Booking {
-  @Prop({ required: true })
-  userId: string;
+  @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })
+  student: User;
 
-  @Prop({ required: true })
-  mentorId: string;
+  @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })
+  mentor: User;
 
   @Prop({ required: true })
   startTime: Date;
@@ -17,8 +18,11 @@ export class Booking {
   @Prop({ required: true })
   endTime: Date;
 
-  @Prop({ default: 'pending' })
-  status: string;  // pending, confirmed, cancelled
+  @Prop({ required: true, enum: ['pending', 'confirmed', 'cancelled'], default: 'pending' })
+  status: string;
+
+  @Prop()
+  notes?: string;
 }
 
 export const BookingSchema = SchemaFactory.createForClass(Booking);
