@@ -6,10 +6,10 @@ export type RoomDocument = Room & Document;
 @Schema({ timestamps: true })
 export class Room {
   @Prop({ required: true, unique: true })
-  name: string;
+  name!: string;
 
   @Prop({ default: false })
-  isInUse: boolean;
+  isInUse!: boolean;
 }
 
 export const RoomSchema = SchemaFactory.createForClass(Room);

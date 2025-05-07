@@ -3,7 +3,7 @@ import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 export class CreateSessionDto {
   @IsString()
   @IsNotEmpty()
-  bookingId: string;
+  bookingId!: string;
 
   @IsOptional()
   @IsString()

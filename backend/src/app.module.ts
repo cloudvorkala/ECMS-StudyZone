@@ -3,11 +3,11 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import configuration from './config/configuration';
-import { AuthModule } from './auth/auth.module';
+// import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { MentorsModule } from './mentors/mentors.module';
-import { NotificationsModule } from './notifications/notifications.module';
-import { HelpRequestsModule } from './help-requests/help-requests.module';
+// import { MentorsModule } from './mentors/mentors.module';
+// import { NotificationsModule } from './notifications/notifications.module';
+// import { HelpRequestsModule } from './help-requests/help-requests.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { SessionsModule } from './sessions/sessions.module';
@@ -33,11 +33,11 @@ import { CalendarModule } from './calendar/calendar.module';
     }),
     
     // 功能模块
-    AuthModule,
+    // AuthModule,
     UsersModule,
-    MentorsModule,
-    NotificationsModule,
-    HelpRequestsModule,
+    // // MentorsModule,
+    // NotificationsModule,
+    // HelpRequestsModule,
     BookingsModule,
     RoomsModule,
     SessionsModule,
