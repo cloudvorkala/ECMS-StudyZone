@@ -7,19 +7,19 @@ export type BookingDocument = Booking & Document;
 @Schema({ timestamps: true })
 export class Booking {
   @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })
-  student: User;
+  student!: User;
 
   @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })
-  mentor: User;
+  mentor!: User;
 
   @Prop({ required: true })
-  startTime: Date;
+  startTime!: Date;
 
   @Prop({ required: true })
-  endTime: Date;
+  endTime!: Date;
 
   @Prop({ required: true, enum: ['pending', 'confirmed', 'cancelled'], default: 'pending' })
-  status: string;
+  status!: string;
 
   @Prop()
   notes?: string;

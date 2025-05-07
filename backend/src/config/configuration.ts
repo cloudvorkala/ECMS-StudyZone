@@ -1,6 +1,6 @@
 // src/config/configuration.ts
 export default () => ({
-  port: parseInt(process.env.PORT, 10) || 3000,
+  port: parseInt(process.env.PORT || '3000', 10),
 
   database: {
     uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/studyzone',
@@ -14,7 +14,7 @@ export default () => ({
 
   email: {
     host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT, 10) || 587,
+    port: parseInt(process.env.EMAIL_PORT || '587', 10),
     user: process.env.EMAIL_USER,
     password: process.env.EMAIL_PASSWORD,
     fromEmail: process.env.FROM_EMAIL || 'noreply@mentormatch.com',

@@ -6,7 +6,7 @@ export type SessionDocument = Session & Document;
 @Schema({ timestamps: true })
 export class Session {
   @Prop({ required: true })
-  bookingId: string;
+  bookingId!: string;
 
   @Prop()
   roomId?: string;
