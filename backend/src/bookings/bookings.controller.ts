@@ -1,38 +1,61 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Session, UnauthorizedException } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
-import { UpdateBookingDto } from './dto/update-booking.dto';
-import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Booking } from './schemas/booking.schema';
 
 @Controller('bookings')
-@UseGuards(JwtAuthGuard) // use JWT guard for all routes in this controller
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
   @Post()
-  create(@Body() dto: CreateBookingDto, @CurrentUser() user: any) {
-    return this.bookingsService.create(dto, user._id);
+  async create(@Session() session: any, @Body() createBookingDto: CreateBookingDto): Promise<Booking> {
+    if (!session.user?.id) {
+      throw new UnauthorizedException('You must be logged in to create a booking');
+    }
+    return this.bookingsService.create(session.user.id, createBookingDto);
   }
 
   @Get()
-  findAll(@CurrentUser() user: any) {
-    return this.bookingsService.findByUserId(user._id);
+  async findAll(@Session() session: any): Promise<Booking[]> {
+    if (!session.user?.id) {
+      throw new UnauthorizedException('You must be logged in to view bookings');
+    }
+    return this.bookingsService.findAll();
+  }
+
+  @Get('student')
+  async findByStudent(@Session() session: any): Promise<Booking[]> {
+    if (!session.user?.id) {
+      throw new UnauthorizedException('You must be logged in to view your bookings');
+    }
+    return this.bookingsService.findByStudent(session.user.id);
+  }
+
+  @Get('mentor')
+  async findByMentor(@Session() session: any): Promise<Booking[]> {
+    if (!session.user?.id) {
+      throw new UnauthorizedException('You must be logged in to view your bookings');
+    }
+    return this.bookingsService.findByMentor(session.user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.bookingsService.findOneIfOwnedByUser(id, user._id);
+  async findOne(@Session() session: any, @Param('id') id: string): Promise<Booking> {
+    if (!session.user?.id) {
+      throw new UnauthorizedException('You must be logged in to view bookings');
+    }
+    return this.bookingsService.findOne(id);
   }
 
-  @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateBookingDto) {
-    return this.bookingsService.update(id, dto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.bookingsService.remove(id);
+  @Post(':id/status')
+  async updateStatus(
+    @Session() session: any,
+    @Param('id') id: string,
+    @Body('status') status: string,
+  ): Promise<Booking> {
+    if (!session.user?.id) {
+      throw new UnauthorizedException('You must be logged in to update booking status');
+    }
+    return this.bookingsService.updateStatus(id, status);
   }
 }
