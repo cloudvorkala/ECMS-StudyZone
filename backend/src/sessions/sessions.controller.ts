@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Session, UnauthorizedException } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UseGuards } from '@nestjs/common';
@@ -16,8 +16,11 @@ export class SessionsController {
   }
 
   @Get()
-  findAll(@CurrentUser() user: any) {
-    return this.service.findAllByUser(user._id);
+  async findAll(@Session() session: any) {
+    if (!session.user?.id) {
+      throw new UnauthorizedException('You must be logged in to view sessions');
+    }
+    return this.service.findAll();
   }
 
   @Get(':id')

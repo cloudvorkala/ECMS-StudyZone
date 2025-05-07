@@ -1,41 +1,88 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Booking, BookingDocument } from './schemas/booking.schema';
+import { Booking } from './schemas/booking.schema';
 import { CreateBookingDto } from './dto/create-booking.dto';
-import { UpdateBookingDto } from './dto/update-booking.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class BookingsService {
-  constructor(@InjectModel(Booking.name) private bookingModel: Model<BookingDocument>) {}
+  constructor(
+    @InjectModel(Booking.name) private bookingModel: Model<Booking>,
+    private usersService: UsersService,
+  ) {}
 
-  create(dto: CreateBookingDto, userId: string) {
-    const bookingData = { ...dto, userId };
-    return new this.bookingModel(bookingData).save();
+  async create(studentId: string, createBookingDto: CreateBookingDto): Promise<Booking> {
+    const mentor = await this.usersService.findById(createBookingDto.mentorId);
+    if (!mentor) {
+      throw new NotFoundException('Mentor not found');
+    }
+
+    const startTime = new Date(createBookingDto.startTime);
+    const endTime = new Date(createBookingDto.endTime);
+
+    if (startTime >= endTime) {
+      throw new BadRequestException('End time must be after start time');
+    }
+
+    // Check for overlapping bookings
+    const overlappingBooking = await this.bookingModel.findOne({
+      mentor: createBookingDto.mentorId,
+      status: { $ne: 'cancelled' },
+      $or: [
+        {
+          startTime: { $lt: endTime },
+          endTime: { $gt: startTime }
+        }
+      ]
+    });
+
+    if (overlappingBooking) {
+      throw new BadRequestException('Time slot is already booked');
+    }
+
+    const createdBooking = new this.bookingModel({
+      student: studentId,
+      mentor: createBookingDto.mentorId,
+      startTime,
+      endTime,
+      notes: createBookingDto.notes,
+    });
+
+    return createdBooking.save();
   }
 
-  findAll() {
-    return this.bookingModel.find().exec();
+  async findAll(): Promise<Booking[]> {
+    return this.bookingModel.find().populate('student mentor').exec();
   }
 
-  findOne(id: string) {
-    return this.bookingModel.findById(id).exec();
+  async findByStudent(studentId: string): Promise<Booking[]> {
+    return this.bookingModel.find({ student: studentId }).populate('mentor').exec();
   }
 
-  update(id: string, updateDto: UpdateBookingDto) {
-    return this.bookingModel.findByIdAndUpdate(id, updateDto, { new: true }).exec();
+  async findByMentor(mentorId: string): Promise<Booking[]> {
+    return this.bookingModel.find({ mentor: mentorId }).populate('student').exec();
   }
 
-  remove(id: string) {
-    return this.bookingModel.findByIdAndDelete(id).exec();
+  async findOne(id: string): Promise<Booking> {
+    const booking = await this.bookingModel.findById(id).populate('student mentor').exec();
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+    return booking;
   }
-  
-  findByUserId(userId: string) {
-    return this.bookingModel.find({ userId }).exec();
+
+  async updateStatus(id: string, status: string): Promise<Booking> {
+    const booking = await this.bookingModel.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    ).populate('student mentor').exec();
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    return booking;
   }
-  
-  findOneIfOwnedByUser(id: string, userId: string) {
-    return this.bookingModel.findOne({ _id: id, userId }).exec();
-  }
-  
 }
