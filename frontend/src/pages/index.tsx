@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -114,13 +116,18 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* Registration link */}
         <p className="text-center text-sm text-gray-500 mt-4">
           New mentor?{' '}
-          <a href="/api/mentor-registration" className="text-blue-600 hover:underline">
+          <Link
+            href="/mentor-registration"
+            className="text-blue-600 hover:underline"
+          >
             Apply here
-          </a>
-        </p>
+          </Link>
+        </p>  
       </div>
     </div>
   );
 }
+
