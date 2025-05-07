@@ -1,31 +1,59 @@
 import { useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/router';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('student');
+  const [error, setError] = useState('');
   const router = useRouter();
+
+  const validateEmail = (email: string) => {
+    if (role === 'student' || role === 'mentor') {
+      return /^[a-zA-Z]{1,5}\d{1,6}$/.test(email); // ✅ 只验证前缀
+    } else if (role === 'admin') {
+      return /^[a-zA-Z]+\.[a-zA-Z]+$/.test(email);
+    }
+    return false;
+  };
+
+  const validatePassword = (password: string) => {
+    return /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{1,20}$/.test(password);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateEmail(email)) {
+      setError('❌ Invalid email format for selected role.');
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      setError('❌ Password must be 1-20 characters and contain both letters and numbers.');
+      return;
+    }
+
     try {
+      setError('');
+      const fullEmail =
+        role === 'admin'
+          ? `${email}@autuni.ac.nz`
+          : `${email}@autuni.ac.nz`;
+
       const res = await fetch('/api/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password, role })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: fullEmail, password, role }),
       });
 
       if (!res.ok) throw new Error('Login failed');
       const data = await res.json();
 
       localStorage.setItem('token', data.token);
-      router.push(`/dashboard/${role}`);
+      router.push(`/${role}/dashboard`); // ✅ 不使用 /api 前缀，跳 UI 页面
     } catch (err) {
-      alert('Login failed');
+      setError('❌ Login failed.');
       console.error(err);
     }
   };
@@ -39,14 +67,20 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-            required
-          />
+          <div className="flex items-center border border-gray-300 rounded">
+            <input
+              type="text"
+              placeholder="Email local part"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1 p-2 outline-none rounded-l"
+              required
+            />
+            <span className="px-3 bg-gray-100 text-gray-700 text-sm rounded-r select-none">
+              @autuni.ac.nz
+            </span>
+          </div>
+
           <input
             type="password"
             placeholder="Password"
@@ -55,6 +89,7 @@ export default function LoginPage() {
             className="w-full p-2 border border-gray-300 rounded"
             required
           />
+
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
@@ -64,6 +99,7 @@ export default function LoginPage() {
             <option value="mentor">Mentor</option>
             <option value="admin">Admin</option>
           </select>
+
           <button
             type="submit"
             className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
@@ -71,6 +107,12 @@ export default function LoginPage() {
             Login
           </button>
         </form>
+
+        {error && (
+          <div className="mt-4 p-2 bg-red-100 text-red-700 text-sm text-center rounded">
+            {error}
+          </div>
+        )}
 
         <p className="text-center text-sm text-gray-500 mt-4">
           New mentor?{' '}
