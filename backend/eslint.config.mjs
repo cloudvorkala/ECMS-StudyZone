@@ -29,11 +29,8 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn'
-    },
-    {
-      "rules": {
-        "linebreak-style": "off"
-      }
-  },
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      'linebreak-style': "off"
+    },  
+  }      
 );
