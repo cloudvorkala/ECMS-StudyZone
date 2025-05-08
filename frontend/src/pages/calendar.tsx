@@ -1,2 +1,2 @@
-// ✅ src/pages/calendar.tsx
-export { default } from '@/pages/api/calendar';
+// ✅ src/pages/notifications.tsx
+export { default } from './api/notifications';
