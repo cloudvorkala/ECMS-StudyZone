@@ -1,2 +1,1 @@
-// ✅ src/pages/bookings.tsx
-export { default } from '../pages/api/bookings';
+export { default } from '@/pages/api/bookings';

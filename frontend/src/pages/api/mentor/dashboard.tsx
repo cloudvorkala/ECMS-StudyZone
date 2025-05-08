@@ -9,16 +9,16 @@ export default function MentorDashboard() {
     <div className="min-h-screen bg-gray-100 flex p-8">
       {/* 左边功能导航 */}
       <div className="w-1/4 space-y-4">
-        <Link href="/api/calendar" className="block p-4 bg-blue-100 rounded-lg hover:bg-blue-200">
+        <Link href="/calendar" className="block p-4 bg-blue-100 rounded-lg hover:bg-blue-200">
           📆 Manage Availability
         </Link>
-        <Link href="/api/bookings" className="block p-4 bg-yellow-100 rounded-lg hover:bg-yellow-200">
+        <Link href="/bookings" className="block p-4 bg-yellow-100 rounded-lg hover:bg-yellow-200">
           📋 View Bookings
         </Link>
-        <Link href="/api/mentor/groups" className="block p-4 bg-green-100 rounded-lg hover:bg-green-200">
+        <Link href="/mentor/groups" className="block p-4 bg-green-100 rounded-lg hover:bg-green-200">
           👥 Study Groups
         </Link>
-        <Link href="/api/notifications" className="block p-4 bg-purple-100 rounded-lg hover:bg-purple-200">
+        <Link href="/notifications" className="block p-4 bg-purple-100 rounded-lg hover:bg-purple-200">
           🔔 Notifications
         </Link>
         {/* 新增的 Profile 按钮 */}
