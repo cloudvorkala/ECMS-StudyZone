@@ -26,7 +26,7 @@ import { CalendarModule } from './calendar/calendar.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('database.uri'),
+        uri: process.env.DATABASE_URI || 'mongodb+srv://Claude:testforecms1@cluster-test-1.ks3p3aw.mongodb.net/?retryWrites=true&w=majority&appName=Cluster-test-1',
         useNewUrlParser: true,
         useUnifiedTopology: true,
       }),
@@ -35,7 +35,6 @@ import { CalendarModule } from './calendar/calendar.module';
     // feature modules
     AuthModule,
     UsersModule,
-    // // MentorsModule,
     // NotificationsModule,
     // HelpRequestsModule,
     BookingsModule,
