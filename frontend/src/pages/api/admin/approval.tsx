@@ -1,6 +1,4 @@
 // ✅ src/pages/api/admin/approval.tsx
-// Admin 审批页面：左侧导航，右侧欢迎语和提示说明
-
 import React from 'react';
 import Link from 'next/link';
 
@@ -10,25 +8,25 @@ export default function AdminApprovalPage() {
       {/* 左侧导航区域 */}
       <div className="w-full md:w-1/3 space-y-4">
         <Link
-          href="/api/admin/approval"
+          href="/admin/approval"
           className="block p-4 bg-blue-100 rounded hover:bg-blue-200"
         >
           📋 Review Mentor Applications
         </Link>
         <Link
-          href="/api/bookings"
+          href="/bookings"
           className="block p-4 bg-yellow-100 rounded hover:bg-yellow-200"
         >
           📆 Manage All Bookings
         </Link>
         <Link
-          href="/api/calendar"
+          href="/calendar"
           className="block p-4 bg-purple-100 rounded hover:bg-purple-200"
         >
           📅 Session Overview
         </Link>
         <Link
-          href="/api/settings"
+          href="/settings"
           className="block p-4 bg-gray-200 rounded hover:bg-gray-300"
         >
           ⚙️ Admin Settings

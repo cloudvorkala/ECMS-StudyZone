@@ -1,1 +1,1 @@
-export { default } from '../pages/api/settings';
+export { default } from './api/settings';
