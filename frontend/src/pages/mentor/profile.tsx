@@ -1,4 +1,4 @@
-// src/pages/api/mentor/profile.tsx
+// src/pages/mentor/profile.tsx
 import React from 'react';
 
 export default function MentorProfile() {
