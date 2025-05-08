@@ -1,13 +1,10 @@
-// ✅ src/pages/api/mentor/dashboard.tsx
-// Mentor Dashboard 页面：展示欢迎信息与功能导航
-
 import React from 'react';
 import Link from 'next/link';
 
 export default function MentorDashboard() {
   return (
     <div className="min-h-screen bg-gray-100 flex p-8">
-      {/* 左边功能导航 */}
+      {/* Left Panel: Navigation */}
       <div className="w-1/4 space-y-4">
         <Link href="/calendar" className="block p-4 bg-blue-100 rounded-lg hover:bg-blue-200">
           📆 Manage Availability
@@ -21,16 +18,17 @@ export default function MentorDashboard() {
         <Link href="/notifications" className="block p-4 bg-purple-100 rounded-lg hover:bg-purple-200">
           🔔 Notifications
         </Link>
-        {/* 新增的 Profile 按钮 */}
+        {/* New Booking Requests Button */}
+        <Link href="/mentor/booking-requests" className="block p-4 bg-orange-100 rounded-lg hover:bg-orange-200">
+          📩 Booking Requests
+        </Link>
+        {/* Profile Button */}
         <Link href="/mentor/profile" className="block p-4 bg-gray-300 rounded-lg hover:bg-gray-400">
-  🙍‍♂️ Profile
-</Link>
-
-      
-        
+          🙍‍♂️ Profile
+        </Link>
       </div>
 
-      {/* 右边欢迎内容 */}
+      {/* Right Panel: Welcome Content */}
       <div className="flex-1 ml-10 bg-white p-6 rounded-xl shadow-md">
         <h1 className="text-2xl font-bold text-blue-700 mb-4">Welcome, Mentor!</h1>
         <p className="text-gray-700">
