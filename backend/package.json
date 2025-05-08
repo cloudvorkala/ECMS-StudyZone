@@ -6,7 +6,6 @@
     "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^11.1.0",
     "@nestjs/swagger": "^11.2.0",
-    "@types/bcrypt": "^5.0.2",
     "bcrypt": "^5.1.1",
     "bootstrap": "^5.3.5",
     "class-transformer": "^0.5.1",
@@ -19,13 +18,14 @@
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.7",
+    "@types/bcrypt": "^5.0.2",
     "@types/express-session": "^1.18.1",
     "@types/node": "^22.15.15"
   },
   "scripts": {
-  "start": "node dist/main.js",
-  "start:dev": "nest start --watch",
-  "build": "nest build",
-  "format": "prettier --write \"src/**/*.ts\""
+    "start": "node dist/main.js",
+    "start:dev": "nest start --watch",
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\""
   }
 }

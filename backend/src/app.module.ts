@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import configuration from './config/configuration';
-// import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 // import { MentorsModule } from './mentors/mentors.module';
 // import { NotificationsModule } from './notifications/notifications.module';
@@ -15,13 +15,13 @@ import { CalendarModule } from './calendar/calendar.module';
 
 @Module({
   imports: [
-    // 配置模块
+    // config module
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
     }),
-    
-    // MongoDB连接
+
+    // mongodb connections
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -31,9 +31,9 @@ import { CalendarModule } from './calendar/calendar.module';
         useUnifiedTopology: true,
       }),
     }),
-    
-    // 功能模块
-    // AuthModule,
+
+    // feature modules
+    AuthModule,
     UsersModule,
     // // MentorsModule,
     // NotificationsModule,
