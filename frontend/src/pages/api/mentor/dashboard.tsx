@@ -22,9 +22,10 @@ export default function MentorDashboard() {
           🔔 Notifications
         </Link>
         {/* 新增的 Profile 按钮 */}
-        <Link href="/api/mentor/profile" className="block p-4 bg-gray-300 rounded-lg hover:bg-gray-400">
-          🙍‍♂️ Profile
-        </Link>
+        <Link href="/mentor/profile" className="block p-4 bg-gray-300 rounded-lg hover:bg-gray-400">
+  🙍‍♂️ Profile
+</Link>
+
       
         
       </div>
