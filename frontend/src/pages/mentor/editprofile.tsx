@@ -1,22 +1,45 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 export default function EditProfile() {
-  const [degreeType, setDegreeType] = useState('Bachelors'); // State for dropdown
+  const router = useRouter();
+  const [degreeType, setDegreeType] = useState('Bachelors');
   const [degree, setDegree] = useState('');
   const [major, setMajor] = useState('');
   const [currentYear, setCurrentYear] = useState('');
   const [coursesStudied, setCoursesStudied] = useState('');
   const [otherInfo, setOtherInfo] = useState('');
+  const [showPopup, setShowPopup] = useState(false); // State for popup
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission (e.g., save to database)
-    console.log({ degreeType, degree, major, currentYear, coursesStudied, otherInfo });
+    // Save profile data (e.g., to local storage or state)
+    const profileData = {
+      degreeType,
+      degree,
+      major,
+      currentYear,
+      coursesStudied,
+      otherInfo,
+    };
+    localStorage.setItem('mentorProfile', JSON.stringify(profileData)); // Save to local storage
+    setShowPopup(true); // Show popup
+    setTimeout(() => {
+      setShowPopup(false); // Hide popup after 3 seconds
+      router.push('/mentor/profile'); // Navigate back to profile page
+    }, 3000);
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-gray-100 p-8">
+      {/* Popup Notification */}
+      {showPopup && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
+          Profile changes saved!
+        </div>
+      )}
+
       <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-lg">
         <h1 className="text-2xl font-bold text-blue-700 mb-4">Edit Profile</h1>
         <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
