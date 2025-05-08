@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 type TimeSlot = {
   id: number;
@@ -12,24 +12,17 @@ const mockSlots: TimeSlot[] = [
 ];
 
 export default function CalendarPage() {
-  const [slots, setSlots] = useState<TimeSlot[]>(mockSlots);
-  const [loading, setLoading] = useState(false);
-
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-md">
         <h1 className="text-xl font-bold mb-4 text-indigo-600">📅 Session Time Suggestions</h1>
-        {loading ? (
-          <p>Loading time slots...</p>
-        ) : (
-          <ul className="space-y-2">
-            {slots.map(slot => (
-              <li key={slot.id} className="p-3 border rounded">
-                {slot.start} - {slot.end}
-              </li>
-            ))}
-          </ul>
-        )}
+        <ul className="space-y-2">
+          {mockSlots.map(slot => (
+            <li key={slot.id} className="p-3 border rounded">
+              {slot.start} - {slot.end}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

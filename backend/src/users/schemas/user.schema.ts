@@ -20,6 +20,15 @@ export class User extends Document {
   @Prop({ required: true, enum: UserRole })
   role!: UserRole;
 
+  @Prop()
+  phone?: string;
+
+  @Prop()
+  degree?: string;
+
+  @Prop()
+  specialty?: string;
+
   @Prop({ default: Date.now })
   createdAt!: Date;
 }

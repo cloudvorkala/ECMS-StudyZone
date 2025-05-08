@@ -11,12 +11,7 @@ export class UsersService {
     @InjectModel(User.name) private userModel: Model<User>,
   ) {}
 
-  async create(createUserDto: {
-    name: string;
-    email: string;
-    password: string;
-    role: UserRole;
-  }): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<User> {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     const createdUser = new this.userModel({
       ...createUserDto,

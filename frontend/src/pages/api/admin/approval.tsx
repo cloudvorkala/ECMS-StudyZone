@@ -44,7 +44,7 @@ export default function AdminApprovalPage() {
         </p>
         <p className="text-gray-700">
           🔐 Please regularly review pending mentor applications and update session status. You are
-          the backbone of StudyZone's operational excellence.
+          the backbone of StudyZone&apos;s operational excellence.
         </p>
       </div>
     </div>

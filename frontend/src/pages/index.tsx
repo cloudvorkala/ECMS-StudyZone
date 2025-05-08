@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-
+import { signIn } from 'next-auth/react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -12,7 +12,7 @@ export default function LoginPage() {
 
   const validateEmail = (email: string) => {
     if (role === 'student' || role === 'mentor') {
-      return /^[a-zA-Z]{1,5}\d{1,6}$/.test(email); // ✅ 只验证前缀
+      return /^[a-zA-Z]{1,5}\d{1,6}$/.test(email); // only validate prefix
     } else if (role === 'admin') {
       return /^[a-zA-Z]+\.[a-zA-Z]+$/.test(email);
     }
@@ -38,22 +38,20 @@ export default function LoginPage() {
 
     try {
       setError('');
-      const fullEmail =
-        role === 'admin'
-          ? `${email}@autuni.ac.nz`
-          : `${email}@autuni.ac.nz`;
+      const fullEmail = `${email}@autuni.ac.nz`;
 
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: fullEmail, password, role }),
+      const result = await signIn('credentials', {
+        redirect: false,
+        email: fullEmail,
+        password,
+        role,
       });
 
-      if (!res.ok) throw new Error('Login failed');
-      const data = await res.json();
-
-      localStorage.setItem('token', data.token);
-      router.push(`/${role}/dashboard`); // ✅ 不使用 /api 前缀，跳 UI 页面
+      if (result?.error) {
+        setError('❌ Login failed.');
+      } else {
+        router.push(`/${role}/dashboard`);
+      }
     } catch (err) {
       setError('❌ Login failed.');
       console.error(err);
@@ -125,7 +123,7 @@ export default function LoginPage() {
           >
             Apply here
           </Link>
-        </p>  
+        </p>
       </div>
     </div>
   );

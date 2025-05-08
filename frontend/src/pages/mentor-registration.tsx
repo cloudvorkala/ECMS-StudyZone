@@ -1,7 +1,11 @@
 // pages/mentor-registration.tsx
 import { useState } from 'react';
+import { useRouter } from 'next/router';
+import { signIn } from 'next-auth/react';
+import toast from 'react-hot-toast';
 
 export default function MentorRegistration() {
+  const router = useRouter();
   // State variables for each input
   const [fullName, setFullName] = useState<string>('');
   const [emailLocalPart, setEmailLocalPart] = useState<string>(''); // local part only
@@ -9,6 +13,7 @@ export default function MentorRegistration() {
   const [degree, setDegree] = useState<string>('');
   const [specialty, setSpecialty] = useState<string>('');
   const [password, setPassword] = useState<string>(''); // password
+  const [isLoading, setIsLoading] = useState(false);
 
   // Validation patterns
   const emailPattern = /^[a-zA-Z]{1,5}[0-9]{1,6}$/; // local part format
@@ -16,47 +21,64 @@ export default function MentorRegistration() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
 
     // Validate local part
     if (!emailPattern.test(emailLocalPart)) {
-      alert('Email local part must be 1-5 letters followed by 1-6 digits.');
+      toast.error('Email local part must be 1-5 letters followed by 1-6 digits.');
+      setIsLoading(false);
       return;
     }
     const email = `${emailLocalPart}@autuni.ac.nz`;
 
     // Validate password
     if (!passwordPattern.test(password)) {
-      alert(
-        'Password must be 1-20 characters, include at least one letter, and contain only letters and digits.'
-      );
+      toast.error('Password must be 1-20 characters, include at least one letter, and contain only letters and digits.');
+      setIsLoading(false);
       return;
     }
 
-    // Prepare data for API
-    const data = {
-      fullName,
-      email,
-      phone,
-      degree,
-      specialty,
-      password,
-    };
-
     try {
-      const response = await fetch('/api/mentor/register', {
+      // 1. 注册新用户
+      const registerResponse = await fetch('http://localhost:3000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          name: fullName,
+          email,
+          password,
+          phone,
+          degree,
+          specialty,
+          role: 'mentor'
+        }),
       });
-      const result = await response.json();
-      if (response.ok) {
-        alert(result.message);
-      } else {
-        alert('Error: ' + result.message);
+
+      if (!registerResponse.ok) {
+        const error = await registerResponse.json();
+        throw new Error(error.message || 'Registration failed');
       }
+
+      // 2. 注册成功后自动登录
+      const result = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+        role: 'mentor'
+      });
+
+      if (result?.error) {
+        throw new Error('Login failed after registration');
+      }
+
+      // 3. 显示成功消息并重定向
+      toast.success('Registration successful! Welcome to StudyZone!');
+      router.push('/mentor/dashboard');
     } catch (error) {
       console.error(error);
-      alert('An error occurred.');
+      toast.error(error instanceof Error ? error.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,6 +95,7 @@ export default function MentorRegistration() {
             onChange={(e) => setFullName(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded"
             required
+            disabled={isLoading}
           />
 
           {/* Email Local Part + dropdown for domain */}
@@ -86,6 +109,7 @@ export default function MentorRegistration() {
               pattern="[A-Za-z]{1,5}[0-9]{1,6}"
               title="1-5 letters followed by 1-6 digits"
               required
+              disabled={isLoading}
             />
             <select
               disabled
@@ -103,6 +127,7 @@ export default function MentorRegistration() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded"
             required
+            disabled={isLoading}
           />
 
           {/* Phone Number */}
@@ -113,6 +138,7 @@ export default function MentorRegistration() {
             onChange={(e) => setPhone(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded"
             required
+            disabled={isLoading}
           />
 
           {/* Degree */}
@@ -123,6 +149,7 @@ export default function MentorRegistration() {
             onChange={(e) => setDegree(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded"
             required
+            disabled={isLoading}
           />
 
           {/* Specialty Courses */}
@@ -131,14 +158,16 @@ export default function MentorRegistration() {
             value={specialty}
             onChange={(e) => setSpecialty(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded h-24"
+            disabled={isLoading}
           />
 
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-blue-400"
+            disabled={isLoading}
           >
-            Submit Registration
+            {isLoading ? 'Registering...' : 'Submit Registration'}
           </button>
         </form>
       </div>

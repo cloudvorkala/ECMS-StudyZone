@@ -33,8 +33,8 @@ async function bootstrap() {
     }),
   );
   app.enableCors({
-    origin: 'http://localhost:3000', // frontend Next.js URL
-    credentials: true,              // must be true to allow cookies
+    origin: ['http://localhost:3000', 'http://localhost:3001'], // support both frontend and mentor registration
+    credentials: true,
   });
 
   const swaggerConfig = new DocumentBuilder()

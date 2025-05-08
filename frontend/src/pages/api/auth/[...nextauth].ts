@@ -7,20 +7,30 @@ export default NextAuth({
       name: 'Credentials',
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        role: { label: "Role", type: "text" }
       },
       async authorize(credentials) {
         try {
           const res = await fetch('http://localhost:3000/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(credentials),
+            body: JSON.stringify({
+              email: credentials?.email,
+              password: credentials?.password,
+              role: credentials?.role
+            }),
           });
 
           const user = await res.json();
 
           if (res.ok && user) {
-            return user;
+            return {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role
+            };
           }
           return null;
         } catch {
@@ -30,8 +40,7 @@ export default NextAuth({
     })
   ],
   pages: {
-    signIn: '/auth/signin',
-    signOut: '/auth/signout',
+    signIn: '/',
     error: '/auth/error',
   }
 });
