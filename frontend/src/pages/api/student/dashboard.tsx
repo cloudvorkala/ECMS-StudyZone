@@ -11,7 +11,7 @@ export default function StudentDashboard() {
         <Link href="/mentor-recommendation" className="block p-4 bg-blue-100 rounded-lg hover:bg-blue-200">
           🌟 Recommended Mentors
         </Link>
-        <Link href="/bookings" className="block p-4 bg-yellow-100 rounded-lg hover:bg-yellow-200">
+        <Link href="/booking" className="block p-4 bg-yellow-100 rounded-lg hover:bg-yellow-200">
           📋 My Bookings
         </Link>
         <Link href="/calendar" className="block p-4 bg-indigo-100 rounded-lg hover:bg-indigo-200">
