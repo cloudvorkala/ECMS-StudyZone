@@ -2,7 +2,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import configuration from './config/configuration';
+import Configuration from './config/configuration';
 // import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 // import { MentorsModule } from './mentors/mentors.module';
@@ -18,18 +18,23 @@ import { CalendarModule } from './calendar/calendar.module';
     // 配置模块
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [configuration],
+      load: [Configuration],
     }),
     
     // MongoDB连接
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('database.uri'),
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const uri = configService.get<string>('database.uri');
+        console.log('MongoDB URI loaded:', uri);
+        return {
+          uri,
+          useNewUrlParser: true,
+          useUnifiedTopology: true,
+        };
+      },
+      
     }),
     
     // 功能模块
