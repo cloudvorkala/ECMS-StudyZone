@@ -26,11 +26,11 @@ export default function StudentDashboard() {
       <div className="flex-1 bg-white p-6 rounded-xl shadow-md">
         <h1 className="text-2xl font-bold mb-4 text-green-700">Welcome, Student! 🎓</h1>
         <p className="text-gray-700 mb-4">
-          You're all set to boost your learning! Use the left panel to book sessions, manage your time, and ask questions to our awesome mentors.
+          You&apos;re all set to boost your learning! Use the left panel to book sessions, manage your time, and ask questions to our awesome mentors.
         </p>
         <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
-          <li>💡 Click "Recommended Mentors" to explore matched mentors</li>
-          <li>🗓️ Check "Session Time Suggestions" for availability</li>
+          <li>💡 Click &quot;Recommended Mentors&quot; to explore matched mentors</li>
+          <li>🗓️ Check &quot;Session Time Suggestions&quot; for availability</li>
           <li>📋 Track your bookings and update your profile anytime</li>
         </ul>
         <div className="bg-green-100 text-green-700 p-3 rounded mt-4">

@@ -1,18 +1,32 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import api from '@/services/api';
 
+interface LoginResponse {
+  token: string;
+  user: {
+    id: number;
+    email: string;
+    role: string;
+  };
+}
+
+interface ApiErrorResponse {
+  message: string;
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('student');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const validateEmail = (email: string) => {
     if (role === 'student' || role === 'mentor') {
-      return /^[a-zA-Z]{1,5}\d{1,6}$/.test(email); // ✅ 只验证前缀
+      return /^[a-zA-Z]{1,5}\d{1,6}$/.test(email);
     } else if (role === 'admin') {
       return /^[a-zA-Z]+\.[a-zA-Z]+$/.test(email);
     }
@@ -25,38 +39,46 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
 
     if (!validateEmail(email)) {
       setError('❌ Invalid email format for selected role.');
+      setLoading(false);
       return;
     }
 
     if (!validatePassword(password)) {
       setError('❌ Password must be 1-20 characters and contain both letters and numbers.');
+      setLoading(false);
       return;
     }
 
     try {
-      setError('');
-      const fullEmail =
-        role === 'admin'
-          ? `${email}@autuni.ac.nz`
-          : `${email}@autuni.ac.nz`;
-
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: fullEmail, password, role }),
+      const fullEmail = `${email}@autuni.ac.nz`;
+      const response = await api.post<LoginResponse>('/auth/login', {
+        email: fullEmail,
+        password,
+        role,
       });
 
-      if (!res.ok) throw new Error('Login failed');
-      const data = await res.json();
-
-      localStorage.setItem('token', data.token);
-      router.push(`/${role}/dashboard`); // ✅ 不使用 /api 前缀，跳 UI 页面
-    } catch (err) {
-      setError('❌ Login failed.');
-      console.error(err);
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        router.push(`/${role}/dashboard`);
+      } else {
+        setError('❌ Login failed. Invalid response from server.');
+      }
+    } catch (error: unknown) {
+      console.error('Login error:', error);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: ApiErrorResponse } };
+        setError(`❌ ${axiosError.response?.data?.message || 'Login failed. Please check your credentials.'}`);
+      } else {
+        setError('❌ Login failed. Please check your credentials.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,6 +99,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               className="flex-1 p-2 outline-none rounded-l"
               required
+              disabled={loading}
             />
             <span className="px-3 bg-gray-100 text-gray-700 text-sm rounded-r select-none">
               @autuni.ac.nz
@@ -90,12 +113,14 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded"
             required
+            disabled={loading}
           />
 
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded"
+            disabled={loading}
           >
             <option value="student">Student</option>
             <option value="mentor">Mentor</option>
@@ -104,9 +129,10 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-blue-400"
+            disabled={loading}
           >
-            Login
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
@@ -116,16 +142,26 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Registration link */}
-        <p className="text-center text-sm text-gray-500 mt-4">
-          New mentor?{' '}
-          <Link
-            href="/mentor-registration"
-            className="text-blue-600 hover:underline"
-          >
-            Apply here
-          </Link>
-        </p>  
+        <div className="text-center text-sm text-gray-500 mt-4 space-y-2">
+          <p>
+            New student?{' '}
+            <Link
+              href="/student-registration"
+              className="text-blue-600 hover:underline"
+            >
+              Register here
+            </Link>
+          </p>
+          <p>
+            New mentor?{' '}
+            <Link
+              href="/mentor-registration"
+              className="text-blue-600 hover:underline"
+            >
+              Apply here
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

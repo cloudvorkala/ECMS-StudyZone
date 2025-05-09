@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import * as session from 'express-session';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -24,6 +25,10 @@ async function bootstrap() {
     }),
   );
 
+  // 应用全局认证守卫
+  const jwtAuthGuard = app.get(JwtAuthGuard);
+  app.useGlobalGuards(jwtAuthGuard);
+
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({
@@ -33,7 +38,7 @@ async function bootstrap() {
     }),
   );
   app.enableCors({
-    origin: 'http://localhost:3000', // frontend Next.js URL
+    origin: ['http://localhost:3000', 'http://localhost:3001'], // allow frontend to access
     credentials: true,              // must be true to allow cookies
   });
 

@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import Configuration from './config/configuration';
-// import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 // import { MentorsModule } from './mentors/mentors.module';
 // import { NotificationsModule } from './notifications/notifications.module';
@@ -15,30 +15,25 @@ import { CalendarModule } from './calendar/calendar.module';
 
 @Module({
   imports: [
-    // 配置模块
+    //
     ConfigModule.forRoot({
       isGlobal: true,
       load: [Configuration],
     }),
-    
-    // MongoDB连接
+
+    // MongoDB
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => {
-        const uri = configService.get<string>('database.uri');
-        console.log('MongoDB URI loaded:', uri);
-        return {
-          uri,
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
-        };
-      },
-      
+      useFactory: async (configService: ConfigService) => ({
+        uri: process.env.DATABASE_URI || 'mongodb+srv://Claude:testforecms1@cluster-test-1.ks3p3aw.mongodb.net/?retryWrites=true&w=majority&appName=Cluster-test-1',
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      }),
     }),
-    
+
     // 功能模块
-    // AuthModule,
+    AuthModule,
     UsersModule,
     // // MentorsModule,
     // NotificationsModule,

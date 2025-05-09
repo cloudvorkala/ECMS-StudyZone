@@ -1,27 +1,22 @@
-// pages/mentor-registration.tsx
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import api from '@/services/api';
 
-interface ApiErrorResponse {
-  message: string;
-}
-
-export default function MentorRegistration() {
+export default function StudentRegistration() {
   const router = useRouter();
   // State variables for each input
   const [fullName, setFullName] = useState<string>('');
   const [emailLocalPart, setEmailLocalPart] = useState<string>(''); // local part only
   const [phone, setPhone] = useState<string>('');
-  const [degree, setDegree] = useState<string>('');
-  const [specialty, setSpecialty] = useState<string>('');
-  const [password, setPassword] = useState<string>(''); // password
+  const [studentId, setStudentId] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   // Validation patterns
-  const emailPattern = /^[a-zA-Z]{1,5}[0-9]{1,6}$/; // local part format
-  const passwordPattern = /^(?=.*[A-Za-z])[A-Za-z0-9]{1,20}$/; // password rules
+  const emailPattern = /^[a-zA-Z]{1,5}[0-9]{1,6}$/; // 1-5 letters followed by 1-6 digits
+  const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{1,20}$/; // 1-20 chars, must contain both letters and digits
+  const studentIdPattern = /^\d{8}$/; // 8 digits
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,7 +25,7 @@ export default function MentorRegistration() {
 
     // Validate local part
     if (!emailPattern.test(emailLocalPart)) {
-      setError('Email local part must be 1-5 letters followed by 1-6 digits.');
+      setError('Email must be 1-5 letters followed by 1-6 digits (e.g., abcd123456).');
       setLoading(false);
       return;
     }
@@ -38,7 +33,14 @@ export default function MentorRegistration() {
 
     // Validate password
     if (!passwordPattern.test(password)) {
-      setError('Password must be 1-20 characters, include at least one letter, and contain only letters and digits.');
+      setError('Password must be 1-20 characters and contain both letters and numbers (e.g., abc123).');
+      setLoading(false);
+      return;
+    }
+
+    // Validate student ID
+    if (!studentIdPattern.test(studentId)) {
+      setError('Student ID must be 8 digits.');
       setLoading(false);
       return;
     }
@@ -48,22 +50,21 @@ export default function MentorRegistration() {
       fullName,
       email,
       phone,
-      degree,
-      specialty,
+      studentId,
       password,
     };
 
     try {
-      const response = await api.post('/api/users/register/mentor', data);
+      const response = await api.post('/users/register/student', data);
 
       if (response.status === 201) {
-        alert('Registration successful! Please wait for admin approval.');
+        alert('Registration successful! You can now login.');
         router.push('/');
       }
     } catch (error: unknown) {
       console.error('Registration error:', error);
       if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: ApiErrorResponse } };
+        const axiosError = error as { response?: { data?: { message: string } } };
         setError(axiosError.response?.data?.message || 'An error occurred during registration');
       } else {
         setError('An unexpected error occurred');
@@ -76,7 +77,7 @@ export default function MentorRegistration() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-xl">
-        <h2 className="text-2xl font-bold mb-4">Mentor Registration</h2>
+        <h2 className="text-2xl font-bold mb-4">Student Registration</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Full Name */}
           <input
@@ -92,26 +93,35 @@ export default function MentorRegistration() {
           <div className="flex items-center">
             <input
               type="text"
-              placeholder="Email"
+              placeholder="Email (e.g., abcd123456)"
               value={emailLocalPart}
               onChange={(e) => setEmailLocalPart(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded"
-              pattern="[A-Za-z]{1,5}[0-9]{1,6}"
+              pattern="[a-zA-Z]{1,5}[0-9]{1,6}"
               title="1-5 letters followed by 1-6 digits"
               required
             />
-            <select
-              disabled
-              className="ml-2 p-2 border border-gray-300 rounded bg-gray-100 cursor-not-allowed"
-            >
-              <option>@autuni.ac.nz</option>
-            </select>
+            <span className="px-3 bg-gray-100 text-gray-700 text-sm rounded-r select-none">
+              @autuni.ac.nz
+            </span>
           </div>
+
+          {/* Student ID */}
+          <input
+            type="text"
+            placeholder="Student ID (8 digits)"
+            value={studentId}
+            onChange={(e) => setStudentId(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded"
+            pattern="\d{8}"
+            title="8 digits"
+            required
+          />
 
           {/* Password */}
           <input
             type="password"
-            placeholder="Password"
+            placeholder="Password (must contain both letters and numbers)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded"
@@ -125,25 +135,6 @@ export default function MentorRegistration() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded"
-            required
-          />
-
-          {/* Degree */}
-          <input
-            type="text"
-            placeholder="Degree"
-            value={degree}
-            onChange={(e) => setDegree(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-            required
-          />
-
-          {/* Specialty Courses */}
-          <textarea
-            placeholder="List your courses you are available to mentor for"
-            value={specialty}
-            onChange={(e) => setSpecialty(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded h-24"
             required
           />
 
