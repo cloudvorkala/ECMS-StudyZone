@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Request, Logger, NotFoundException } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { Booking } from './schemas/booking.schema';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '../users/schemas/user.schema';
 
 interface ErrorWithMessage {
   message: string;
@@ -69,5 +70,33 @@ export class BookingsController {
   ): Promise<Booking> {
     this.logger.debug(`Updating booking ${id} status to ${status} for mentor: ${req.user.id}`);
     return this.bookingsService.updateStatus(id, status);
+  }
+
+  @Get('mentor/stats')
+  @Roles(UserRole.MENTOR)
+  async getMentorStats(@Request() req) {
+    const mentorId = req.user.id;
+    const bookings = await this.bookingsService.findByMentor(mentorId);
+
+    const stats = {
+      totalBookings: bookings.length,
+      pendingBookings: bookings.filter(b => b.status === 'pending').length,
+      completedSessions: bookings.filter(b => b.status === 'completed').length,
+      averageRating: req.user.rating || 0
+    };
+
+    return stats;
+  }
+
+  @Get('mentor/recent')
+  @Roles(UserRole.MENTOR)
+  async getRecentBookings(@Request() req) {
+    const mentorId = req.user.id;
+    const bookings = await this.bookingsService.findByMentor(mentorId);
+
+    // Sort by start time and get the 5 most recent bookings
+    return bookings
+      .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+      .slice(0, 5);
   }
 }
