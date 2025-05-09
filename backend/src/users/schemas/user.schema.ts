@@ -32,6 +32,15 @@ export class User extends Document {
   @Prop()
   specialty?: string;
 
+  @Prop({ type: [String], default: [] })
+  expertise!: string[];
+
+  @Prop()
+  institution?: string;
+
+  @Prop({ default: 0 })
+  rating!: number;
+
   @Prop({ default: Date.now })
   createdAt!: Date;
 }

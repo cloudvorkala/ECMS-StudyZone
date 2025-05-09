@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsArray, IsOptional } from 'class-validator';
 
 export class RegisterMentorDto {
   @IsNotEmpty()
@@ -20,6 +20,15 @@ export class RegisterMentorDto {
   @IsNotEmpty()
   @IsString()
   specialty!: string;
+
+  @IsNotEmpty()
+  @IsArray()
+  @IsString({ each: true })
+  expertise!: string[];
+
+  @IsNotEmpty()
+  @IsString()
+  institution!: string;
 
   @IsNotEmpty()
   @IsString()

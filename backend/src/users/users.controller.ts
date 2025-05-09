@@ -1,13 +1,19 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, ConflictException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, NotFoundException, ConflictException, UseGuards, Logger } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { RegisterMentorDto } from './dto/register-mentor.dto';
 import { RegisterStudentDto } from './dto/register-student.dto';
 import { User, UserRole } from './schemas/user.schema';
 import { Public } from '../auth/public.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
+  private readonly logger = new Logger(UsersController.name);
+
   constructor(private readonly usersService: UsersService) {}
 
   @Public()
@@ -26,6 +32,8 @@ export class UsersController {
       phone: registerMentorDto.phone,
       degree: registerMentorDto.degree,
       specialty: registerMentorDto.specialty,
+      expertise: registerMentorDto.expertise,
+      institution: registerMentorDto.institution,
     };
 
     return this.usersService.create(createUserDto);
@@ -62,7 +70,9 @@ export class UsersController {
   }
 
   @Get('mentors')
-  async findMentors(): Promise<User[]> {
+  @Roles('student')
+  async getMentors() {
+    this.logger.debug('Getting all mentors');
     return this.usersService.findMentors();
   }
 
