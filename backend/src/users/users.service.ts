@@ -16,6 +16,9 @@ export class UsersService {
     const createdUser = new this.userModel({
       ...createUserDto,
       password: hashedPassword,
+      expertise: createUserDto.expertise || [],
+      institution: createUserDto.institution || '',
+      rating: 0,
     });
     return createdUser.save();
   }

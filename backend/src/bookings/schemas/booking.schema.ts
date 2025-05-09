@@ -6,6 +6,8 @@ export type BookingDocument = Booking & Document;
 
 @Schema({ timestamps: true })
 export class Booking {
+  _id!: string;
+
   @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })
   student!: User;
 

@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CreateTimeSlotDto } from './dto/create-time-slot.dto';
+import { TimeSlot } from './schemas/time-slot.schema';
 
 interface ErrorWithMessage {
   message: string;
@@ -22,6 +23,13 @@ export class CalendarController {
   async getAvailability(@Request() req) {
     this.logger.debug(`Getting availability for mentor: ${req.user.id}`);
     return this.calendarService.getAvailabilityForMentor(req.user.id);
+  }
+
+  @Get('mentor/:mentorId')
+  @Roles('student')
+  async getMentorAvailability(@Param('mentorId') mentorId: string) {
+    this.logger.debug(`Getting availability for mentor: ${mentorId}`);
+    return this.calendarService.getAvailabilityForMentor(mentorId);
   }
 
   @Post()
