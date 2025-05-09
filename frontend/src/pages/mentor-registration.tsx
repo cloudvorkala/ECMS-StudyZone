@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import api from '@/services/api';
+import PublicRoute from '@/components/PublicRoute';
 
 interface ApiErrorResponse {
   message: string;
@@ -54,7 +55,7 @@ export default function MentorRegistration() {
     };
 
     try {
-      const response = await api.post('/api/users/register/mentor', data);
+      const response = await api.post('/users/register/mentor', data);
 
       if (response.status === 201) {
         alert('Registration successful! Please wait for admin approval.');
@@ -74,95 +75,97 @@ export default function MentorRegistration() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-xl">
-        <h2 className="text-2xl font-bold mb-4">Mentor Registration</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Full Name */}
-          <input
-            type="text"
-            placeholder="Full Name"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-            required
-          />
-
-          {/* Email Local Part + dropdown for domain */}
-          <div className="flex items-center">
+    <PublicRoute>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+        <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-xl">
+          <h2 className="text-2xl font-bold mb-4">Mentor Registration</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Full Name */}
             <input
               type="text"
-              placeholder="Email"
-              value={emailLocalPart}
-              onChange={(e) => setEmailLocalPart(e.target.value)}
+              placeholder="Full Name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded"
-              pattern="[A-Za-z]{1,5}[0-9]{1,6}"
-              title="1-5 letters followed by 1-6 digits"
               required
             />
-            <select
-              disabled
-              className="ml-2 p-2 border border-gray-300 rounded bg-gray-100 cursor-not-allowed"
-            >
-              <option>@autuni.ac.nz</option>
-            </select>
-          </div>
 
-          {/* Password */}
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-            required
-          />
-
-          {/* Phone Number */}
-          <input
-            type="tel"
-            placeholder="Phone Number"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-            required
-          />
-
-          {/* Degree */}
-          <input
-            type="text"
-            placeholder="Degree"
-            value={degree}
-            onChange={(e) => setDegree(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-            required
-          />
-
-          {/* Specialty Courses */}
-          <textarea
-            placeholder="List your courses you are available to mentor for"
-            value={specialty}
-            onChange={(e) => setSpecialty(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded h-24"
-            required
-          />
-
-          {error && (
-            <div className="p-2 bg-red-100 text-red-700 text-sm rounded">
-              {error}
+            {/* Email Local Part + dropdown for domain */}
+            <div className="flex items-center">
+              <input
+                type="text"
+                placeholder="Email"
+                value={emailLocalPart}
+                onChange={(e) => setEmailLocalPart(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded"
+                pattern="[A-Za-z]{1,5}[0-9]{1,6}"
+                title="1-5 letters followed by 1-6 digits"
+                required
+              />
+              <select
+                disabled
+                className="ml-2 p-2 border border-gray-300 rounded bg-gray-100 cursor-not-allowed"
+              >
+                <option>@autuni.ac.nz</option>
+              </select>
             </div>
-          )}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-blue-400"
-            disabled={loading}
-          >
-            {loading ? 'Submitting...' : 'Submit Registration'}
-          </button>
-        </form>
+            {/* Password */}
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+              required
+            />
+
+            {/* Phone Number */}
+            <input
+              type="tel"
+              placeholder="Phone Number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+              required
+            />
+
+            {/* Degree */}
+            <input
+              type="text"
+              placeholder="Degree"
+              value={degree}
+              onChange={(e) => setDegree(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+              required
+            />
+
+            {/* Specialty Courses */}
+            <textarea
+              placeholder="List your courses you are available to mentor for"
+              value={specialty}
+              onChange={(e) => setSpecialty(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded h-24"
+              required
+            />
+
+            {error && (
+              <div className="p-2 bg-red-100 text-red-700 text-sm rounded">
+                {error}
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-blue-400"
+              disabled={loading}
+            >
+              {loading ? 'Submitting...' : 'Submit Registration'}
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    </PublicRoute>
   );
 }

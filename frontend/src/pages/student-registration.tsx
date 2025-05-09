@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import api from '@/services/api';
+import PublicRoute from '@/components/PublicRoute';
 
 export default function StudentRegistration() {
   const router = useRouter();
@@ -75,85 +76,87 @@ export default function StudentRegistration() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-xl">
-        <h2 className="text-2xl font-bold mb-4">Student Registration</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Full Name */}
-          <input
-            type="text"
-            placeholder="Full Name"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-            required
-          />
-
-          {/* Email Local Part + dropdown for domain */}
-          <div className="flex items-center">
+    <PublicRoute>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+        <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-xl">
+          <h2 className="text-2xl font-bold mb-4">Student Registration</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Full Name */}
             <input
               type="text"
-              placeholder="Email (e.g., abcd123456)"
-              value={emailLocalPart}
-              onChange={(e) => setEmailLocalPart(e.target.value)}
+              placeholder="Full Name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded"
-              pattern="[a-zA-Z]{1,5}[0-9]{1,6}"
-              title="1-5 letters followed by 1-6 digits"
               required
             />
-            <span className="px-3 bg-gray-100 text-gray-700 text-sm rounded-r select-none">
-              @autuni.ac.nz
-            </span>
-          </div>
 
-          {/* Student ID */}
-          <input
-            type="text"
-            placeholder="Student ID (8 digits)"
-            value={studentId}
-            onChange={(e) => setStudentId(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-            pattern="\d{8}"
-            title="8 digits"
-            required
-          />
-
-          {/* Password */}
-          <input
-            type="password"
-            placeholder="Password (must contain both letters and numbers)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-            required
-          />
-
-          {/* Phone Number */}
-          <input
-            type="tel"
-            placeholder="Phone Number"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
-            required
-          />
-
-          {error && (
-            <div className="p-2 bg-red-100 text-red-700 text-sm rounded">
-              {error}
+            {/* Email Local Part + dropdown for domain */}
+            <div className="flex items-center">
+              <input
+                type="text"
+                placeholder="Email (e.g., abcd123456)"
+                value={emailLocalPart}
+                onChange={(e) => setEmailLocalPart(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded"
+                pattern="[a-zA-Z]{1,5}[0-9]{1,6}"
+                title="1-5 letters followed by 1-6 digits"
+                required
+              />
+              <span className="px-3 bg-gray-100 text-gray-700 text-sm rounded-r select-none">
+                @autuni.ac.nz
+              </span>
             </div>
-          )}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-blue-400"
-            disabled={loading}
-          >
-            {loading ? 'Submitting...' : 'Submit Registration'}
-          </button>
-        </form>
+            {/* Student ID */}
+            <input
+              type="text"
+              placeholder="Student ID (8 digits)"
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+              pattern="\d{8}"
+              title="8 digits"
+              required
+            />
+
+            {/* Password */}
+            <input
+              type="password"
+              placeholder="Password (must contain both letters and numbers)"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+              required
+            />
+
+            {/* Phone Number */}
+            <input
+              type="tel"
+              placeholder="Phone Number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+              required
+            />
+
+            {error && (
+              <div className="p-2 bg-red-100 text-red-700 text-sm rounded">
+                {error}
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-blue-400"
+              disabled={loading}
+            >
+              {loading ? 'Submitting...' : 'Submit Registration'}
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    </PublicRoute>
   );
 }

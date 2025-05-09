@@ -11,9 +11,9 @@ const api = axios.create({
 
 // 请求拦截器：添加 token
 api.interceptors.request.use((config) => {
-  // 只在浏览器环境中使用 localStorage
+  // 只在浏览器环境中使用 sessionStorage
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -25,9 +25,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // 只在浏览器环境中使用 localStorage
+    // 只在浏览器环境中使用 sessionStorage
     if (typeof window !== 'undefined' && error.response?.status === 401) {
-      localStorage.removeItem('token');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
       window.location.href = '/';
     }
     return Promise.reject(error);

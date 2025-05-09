@@ -19,10 +19,13 @@ export class UsersController {
     }
 
     const createUserDto: CreateUserDto = {
-      name: registerMentorDto.fullName,
+      fullName: registerMentorDto.fullName,
       email: registerMentorDto.email,
       password: registerMentorDto.password,
       role: UserRole.MENTOR,
+      phone: registerMentorDto.phone,
+      degree: registerMentorDto.degree,
+      specialty: registerMentorDto.specialty,
     };
 
     return this.usersService.create(createUserDto);
@@ -37,10 +40,12 @@ export class UsersController {
     }
 
     const createUserDto: CreateUserDto = {
-      name: registerStudentDto.fullName,
+      fullName: registerStudentDto.fullName,
       email: registerStudentDto.email,
       password: registerStudentDto.password,
       role: UserRole.STUDENT,
+      phone: registerStudentDto.phone,
+      studentId: registerStudentDto.studentId,
     };
 
     return this.usersService.create(createUserDto);
