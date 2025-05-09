@@ -12,8 +12,8 @@ const mockSlots: TimeSlot[] = [
 ];
 
 export default function CalendarPage() {
-  const [slots, setSlots] = useState<TimeSlot[]>(mockSlots);
-  const [loading, setLoading] = useState(false);
+  const [slots] = useState<TimeSlot[]>(mockSlots);
+  const [loading] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">

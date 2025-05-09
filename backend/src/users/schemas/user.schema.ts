@@ -9,7 +9,7 @@ export enum UserRole {
 @Schema()
 export class User extends Document {
   @Prop({ required: true })
-  name!: string;
+  fullName!: string;
 
   @Prop({ required: true, unique: true })
   email!: string;
@@ -19,6 +19,18 @@ export class User extends Document {
 
   @Prop({ required: true, enum: UserRole })
   role!: UserRole;
+
+  @Prop()
+  phone?: string;
+
+  @Prop()
+  studentId?: string;
+
+  @Prop()
+  degree?: string;
+
+  @Prop()
+  specialty?: string;
 
   @Prop({ default: Date.now })
   createdAt!: Date;

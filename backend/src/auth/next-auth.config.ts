@@ -25,7 +25,7 @@ export const nextAuthConfig = (usersService: UsersService) => ({
         return {
           id: (user as any)._id.toString(),
           email: user.email,
-          name: user.name,
+          name: user.fullName,
           role: user.role
         };
       }
