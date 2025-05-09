@@ -1,2 +1,1 @@
-// ✅ src/pages/notifications.tsx
-export { default } from './api/notifications';
+export { default } from './api/calendar';

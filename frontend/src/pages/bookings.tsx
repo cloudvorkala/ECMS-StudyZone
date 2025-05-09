@@ -1,1 +1,1 @@
-export { default } from '@/pages/api/bookings';
+export { default } from './api/bookings';
