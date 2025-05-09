@@ -37,9 +37,13 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  // 配置 CORS
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'], // allow frontend to access
-    credentials: true,              // must be true to allow cookies
+    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   const swaggerConfig = new DocumentBuilder()
