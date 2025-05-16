@@ -16,8 +16,6 @@ export default function MentorRegistration() {
   const [phone, setPhone] = useState<string>('');
   const [degree, setDegree] = useState<string>('');
   const [specialty, setSpecialty] = useState<string>('');
-  const [expertise, setExpertise] = useState<string>('');
-  const [institution, setInstitution] = useState<string>('');
   const [password, setPassword] = useState<string>(''); // password
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -53,14 +51,11 @@ export default function MentorRegistration() {
       phone,
       degree,
       specialty,
-      expertise: expertise.split(',').map(item => item.trim()),
-      institution,
       password,
     };
 
     try {
       const response = await api.post('/users/register/mentor', data);
-      console.log('Registration response:', response);
 
       if (response.status === 201) {
         alert('Registration successful! Please wait for admin approval.');
@@ -70,7 +65,6 @@ export default function MentorRegistration() {
       console.error('Registration error:', error);
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: ApiErrorResponse } };
-        console.error('Server error response:', axiosError.response?.data);
         setError(axiosError.response?.data?.message || 'An error occurred during registration');
       } else {
         setError('An unexpected error occurred');
@@ -146,30 +140,11 @@ export default function MentorRegistration() {
               required
             />
 
-            {/* Institution */}
-            <input
-              type="text"
-              placeholder="Institution"
-              value={institution}
-              onChange={(e) => setInstitution(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded"
-              required
-            />
-
             {/* Specialty Courses */}
             <textarea
               placeholder="List your courses you are available to mentor for"
               value={specialty}
               onChange={(e) => setSpecialty(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded h-24"
-              required
-            />
-
-            {/* Expertise */}
-            <textarea
-              placeholder="List your areas of expertise (comma-separated)"
-              value={expertise}
-              onChange={(e) => setExpertise(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded h-24"
               required
             />

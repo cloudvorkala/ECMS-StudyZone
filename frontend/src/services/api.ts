@@ -7,7 +7,6 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
 });
 
 // 请求拦截器：添加 token
@@ -26,7 +25,6 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('API Error:', error.response?.data || error.message);
     // 只在浏览器环境中使用 sessionStorage
     if (typeof window !== 'undefined' && error.response?.status === 401) {
       sessionStorage.removeItem('token');
