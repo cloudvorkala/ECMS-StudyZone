@@ -8,7 +8,7 @@ export default function AdminApprovalPage() {
       {/* 左侧导航区域 */}
       <div className="w-full md:w-1/3 space-y-4">
         <Link
-          href="/admin/applications"
+          href="/admin/approval"
           className="block p-4 bg-blue-100 rounded hover:bg-blue-200"
         >
           📋 Review Mentor Applications

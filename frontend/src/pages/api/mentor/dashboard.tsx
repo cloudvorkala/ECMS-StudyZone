@@ -2,13 +2,6 @@ import React from 'react';
 import Link from 'next/link';
 
 export default function MentorDashboard() {
-  const handleLogout = () => {
-    // Clear token from localStorage (if applicable)
-    localStorage.removeItem('token');
-    // Redirect to the index login page
-    window.location.href = '/';
-  };
-
   return (
     <div className="min-h-screen bg-gray-100 flex p-8">
       {/* Left Panel: Navigation */}
@@ -33,13 +26,6 @@ export default function MentorDashboard() {
         <Link href="/mentor/profile" className="block p-4 bg-gray-300 rounded-lg hover:bg-gray-400">
           🙍‍♂️ Profile
         </Link>
-        {/* Log Out Button */}
-        <button
-          onClick={handleLogout}
-          className="w-full p-4 bg-red-500 text-white rounded-lg hover:bg-red-600"
-        >
-          🚪 Log Out
-        </button>
       </div>
 
       {/* Right Panel: Welcome Content */}
