@@ -25,6 +25,9 @@ export class Booking {
 
   @Prop()
   notes?: string;
+
+  @Prop()
+  confirmationCode?: string;
 }
 
 export const BookingSchema = SchemaFactory.createForClass(Booking);

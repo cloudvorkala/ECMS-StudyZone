@@ -99,4 +99,23 @@ export class BookingsController {
       .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
       .slice(0, 5);
   }
+
+  // generate a 6-digit confirmation code
+  @Post(':id/generate-code')
+  @Roles('mentor')
+  async generateCode(@Param('id') id: string): Promise<{ code: string }> {
+    const code = await this.bookingsService.generateConfirmationCode(id);
+    return { code }; // return the code
+  }
+
+  // confirm booking with the code
+  @Post(':id/confirm')
+  @Roles('student')
+  async confirmBooking(
+    @Param('id') id: string,
+    @Body('code') code: string,
+  ): Promise<Booking> {
+    return this.bookingsService.confirmWithCode(id, code);
+  }
+
 }

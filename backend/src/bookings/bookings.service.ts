@@ -4,12 +4,14 @@ import { Model } from 'mongoose';
 import { Booking } from './schemas/booking.schema';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UsersService } from '../users/users.service';
+import { MailService } from '../notifications/mail.service';
 
 @Injectable()
 export class BookingsService {
   constructor(
     @InjectModel(Booking.name) private bookingModel: Model<Booking>,
     private usersService: UsersService,
+    private mailService: MailService,
   ) {}
 
   async create(studentId: string, createBookingDto: CreateBookingDto): Promise<Booking> {
@@ -83,6 +85,69 @@ export class BookingsService {
       throw new NotFoundException('Booking not found');
     }
 
+    if ( status === 'cancelled' && booking.student?.email) {
+      await this.mailService.sendBookingCancellation(booking.student.email, {
+      mentorName: booking.mentor.fullName,
+      time: booking.startTime.toLocaleString()
+      });
+    }
     return booking;
   }
+
+  async generateConfirmationCode(id: string): Promise<string> {
+  const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6digit code
+  const booking = await this.bookingModel.findByIdAndUpdate(
+    id,
+    { confirmationCode: code },
+    { new: true }
+  ).populate('student');
+
+  if (!booking) {
+    throw new NotFoundException('Booking not found');
+  }
+
+  if (booking.student?.email) {
+    await this.mailService.sendConfirmationCode(booking.student.email, code);
+  }
+
+  return code;
+}
+
+async confirmWithCode(id: string, code: string): Promise<Booking> {
+  const booking = await this.bookingModel.findById(id);
+
+  if (!booking) {
+    throw new NotFoundException('Booking not found');
+  }
+
+  if (booking.confirmationCode !== code) {
+    throw new BadRequestException('Invalid confirmation code');
+  }
+
+  booking.status = 'confirmed';
+  booking.confirmationCode = undefined; // Clear the confirmation code after confirming
+  await booking.save();
+  return booking;
+}
+
+async cancelBooking(id: string, cancelledBy: string): Promise<Booking> {
+  const booking = await this.bookingModel.findById(id).populate('student mentor');
+
+  if (!booking) throw new NotFoundException('Booking not found');
+  if (booking.status === 'cancelled') throw new BadRequestException('Already cancelled');
+
+  booking.status = 'cancelled';
+  await booking.save();
+
+  // Send notification
+  await this.mailService.sendCancellationNotice(
+    booking.student.email,
+    booking.mentor.email,
+    booking.startTime,
+    cancelledBy
+  );
+
+  return booking;
+}
+
 }

@@ -6,7 +6,7 @@ import Configuration from './config/configuration';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 // import { MentorsModule } from './mentors/mentors.module';
-// import { NotificationsModule } from './notifications/notifications.module';
+import { NotificationsModule } from './notifications/notifications.module';
 // import { HelpRequestsModule } from './help-requests/help-requests.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { RoomsModule } from './rooms/rooms.module';
@@ -35,8 +35,8 @@ import { CalendarModule } from './calendar/calendar.module';
     // 功能模块
     AuthModule,
     UsersModule,
-    // // MentorsModule,
-    // NotificationsModule,
+    // MentorsModule,
+    NotificationsModule,
     // HelpRequestsModule,
     BookingsModule,
     RoomsModule,
