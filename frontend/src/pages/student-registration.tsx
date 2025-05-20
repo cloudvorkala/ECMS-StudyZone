@@ -3,6 +3,11 @@ import { useRouter } from 'next/router';
 import api from '@/services/api';
 import PublicRoute from '@/components/PublicRoute';
 
+interface ApiErrorResponse {
+  message: string;
+  statusCode?: number;
+}
+
 export default function StudentRegistration() {
   const router = useRouter();
   // State variables for each input
@@ -57,6 +62,7 @@ export default function StudentRegistration() {
 
     try {
       const response = await api.post('/users/register/student', data);
+      console.log('Registration response:', response);
 
       if (response.status === 201) {
         alert('Registration successful! You can now login.');
@@ -65,7 +71,8 @@ export default function StudentRegistration() {
     } catch (error: unknown) {
       console.error('Registration error:', error);
       if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: { message: string } } };
+        const axiosError = error as { response?: { data?: ApiErrorResponse } };
+        console.error('Server error response:', axiosError.response?.data);
         setError(axiosError.response?.data?.message || 'An error occurred during registration');
       } else {
         setError('An unexpected error occurred');
