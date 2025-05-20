@@ -1,88 +1,176 @@
-// ✅ frontend/src/pages/bookings.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import api from '@/services/api';
 
 interface Booking {
-  id: number;
-  name: string;
-  time: string;
-  rating?: number;
+  _id: string;
+  student: {
+    fullName: string;
+    email: string;
+  };
+  mentor: {
+    fullName: string;
+    email: string;
+  };
+  startTime: string;
+  endTime: string;
+  status: 'pending' | 'confirmed' | 'cancelled';
+  notes?: string;
 }
 
-const mockBookings: Booking[] = [
-  { id: 1, name: 'Mentor A', time: '10:00 AM - 11:00 AM' },
-  { id: 2, name: 'Mentor B', time: '2:00 PM - 3:00 PM' },
-];
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
 
 export default function BookingsPage() {
-  const [bookings, setBookings] = useState<Booking[]>(mockBookings);
-  const [ratings, setRatings] = useState<Record<number, number>>({});
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [debugInfo, setDebugInfo] = useState('');
+  const [userRole, setUserRole] = useState<string>('');
 
-  const handleCancel = (id: number) => {
-    setBookings(prev => prev.filter(b => b.id !== id));
+  useEffect(() => {
+    const user = sessionStorage.getItem('user');
+    if (user) {
+      const userData = JSON.parse(user);
+      setUserRole(userData.role);
+    }
+    fetchBookings();
+  }, []);
+
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      setDebugInfo('Fetching bookings...');
+      const token = sessionStorage.getItem('token');
+      setDebugInfo(prev => `${prev}\nToken: ${token ? 'Present' : 'Missing'}`);
+
+      const user = sessionStorage.getItem('user');
+      if (user) {
+        const userData = JSON.parse(user);
+        const endpoint = userData.role === 'mentor' ? '/bookings/mentor' : '/bookings/student';
+        const response = await api.get<Booking[]>(endpoint);
+        setDebugInfo(prev => `${prev}\nResponse received: ${JSON.stringify(response.data)}`);
+        setBookings(response.data);
+      }
+      setError('');
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch bookings';
+      setError(errorMessage);
+      setDebugInfo(prev => `${prev}\nError: ${errorMessage}\nFull error: ${JSON.stringify(error)}`);
+      console.error('Error fetching bookings:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRatingChange = (id: number, value: number) => {
-    setRatings(prev => ({ ...prev, [id]: value }));
+  const handleUpdateStatus = async (bookingId: string, newStatus: 'confirmed' | 'cancelled') => {
+    try {
+      setDebugInfo(`Updating booking ${bookingId} status to ${newStatus}...`);
+      await api.post(`/bookings/${bookingId}/status`, { status: newStatus });
+      setDebugInfo(prev => `${prev}\nStatus updated successfully`);
+      await fetchBookings(); // Refresh the list
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update booking status';
+      setError(errorMessage);
+      setDebugInfo(prev => `${prev}\nError: ${errorMessage}\nFull error: ${JSON.stringify(error)}`);
+      console.error('Error updating booking:', error);
+    }
   };
 
-  const handleSubmitRating = (id: number) => {
-    const updated = bookings.map(b =>
-      b.id === id ? { ...b, rating: ratings[id] } : b
-    );
-    setBookings(updated);
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-NZ', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
-        <h1 className="text-xl font-bold mb-4 text-red-600">📋 My Bookings</h1>
-        <ul className="space-y-6">
-          {bookings.map(booking => (
-            <li key={booking.id} className="border p-4 rounded shadow-sm">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="font-semibold text-lg text-blue-700">{booking.name}</p>
-                  <p className="text-sm text-gray-600">{booking.time}</p>
-                  {booking.rating !== undefined && (
-                    <p className="text-green-600 text-sm mt-1">⭐ Rated: {booking.rating}/5</p>
-                  )}
-                </div>
-                <button
-                  onClick={() => handleCancel(booking.id)}
-                  className="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600"
-                >
-                  Cancel
-                </button>
-              </div>
+    <ProtectedRoute allowedRoles={['student', 'mentor']}>
+      <div className="min-h-screen bg-gray-100 p-8">
+        <div className="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
+          <h1 className="text-2xl font-bold mb-6 text-blue-700">📋 My Bookings</h1>
 
-              {/* Rating Section */}
-              {booking.rating === undefined && (
-                <div className="mt-4">
-                  <label className="text-sm font-medium">Rate this mentor:</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <select
-                      value={ratings[booking.id] || ''}
-                      onChange={(e) => handleRatingChange(booking.id, Number(e.target.value))}
-                      className="border p-1 rounded"
-                    >
-                      <option value="">Select</option>
-                      {[1, 2, 3, 4, 5].map(score => (
-                        <option key={score} value={score}>{score}</option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => handleSubmitRating(booking.id)}
-                      className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                    >
-                      Submit Rating
-                    </button>
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+              {error}
+            </div>
+          )}
+
+          {/* Debug Information */}
+          <div className="mb-4 p-3 bg-gray-100 text-gray-700 rounded font-mono text-sm">
+            <pre>{debugInfo}</pre>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-4">Loading bookings...</div>
+          ) : bookings.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">No bookings found</div>
+          ) : (
+            <div className="space-y-4">
+              {bookings.map(booking => (
+                <div key={booking._id} className="border rounded-lg p-4 hover:bg-gray-50">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-lg">
+                        Session with {userRole === 'mentor' ? booking.student.fullName : booking.mentor.fullName}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {userRole === 'mentor' ? booking.student.email : booking.mentor.email}
+                      </p>
+                      <p className="mt-2">
+                        <span className="font-medium">Time:</span>{' '}
+                        {formatDateTime(booking.startTime)} - {formatDateTime(booking.endTime)}
+                      </p>
+                      {booking.notes && (
+                        <p className="mt-1 text-sm text-gray-600">
+                          <span className="font-medium">Notes:</span> {booking.notes}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end space-y-2">
+                      <span className={`px-3 py-1 rounded-full text-sm ${
+                        booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                        booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                      </span>
+                      {userRole === 'mentor' && booking.status === 'pending' && (
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleUpdateStatus(booking._id, 'confirmed')}
+                            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => handleUpdateStatus(booking._id, 'cancelled')}
+                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              )}
-            </li>
-          ))}
-        </ul>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }
