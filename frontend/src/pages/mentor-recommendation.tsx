@@ -1,4 +1,3 @@
-// ✅ src/pages/mentor-recommendation.tsx
 import React, { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import api from '@/services/api';
@@ -20,18 +19,13 @@ interface TimeSlot {
 
 export default function MentorRecommendationPage() {
   const [mentors, setMentors] = useState<Mentor[]>([]);
-  const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
-  const [selectedExpertise, setSelectedExpertise] = useState('');
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
   const [notes, setNotes] = useState('');
-  const [rating, setRating] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'rating' | 'availability'>('rating');
 
   useEffect(() => {
     fetchMentors();
@@ -41,9 +35,7 @@ export default function MentorRecommendationPage() {
     try {
       setLoading(true);
       const response = await api.get<Mentor[]>('/users/mentors');
-      const sorted = response.data.sort((a, b) => b.rating - a.rating);
-      setMentors(sorted);
-      setFilteredMentors(sorted);
+      setMentors(response.data);
     } catch (err) {
       setError('Failed to fetch mentors');
       console.error('Error fetching mentors:', err);
@@ -65,7 +57,6 @@ export default function MentorRecommendationPage() {
   const handleMentorSelect = async (mentor: Mentor) => {
     setSelectedMentor(mentor);
     setSelectedTimeSlot(null);
-    setRating(0);
     await fetchTimeSlots(mentor._id);
   };
 
@@ -94,56 +85,6 @@ export default function MentorRecommendationPage() {
     }
   };
 
-  const handleRatingSubmit = async () => {
-    if (!selectedMentor || rating === 0) {
-      setError('Please select a mentor and rating before submitting');
-      return;
-    }
-
-    try {
-      await api.post('/ratings', {
-        mentorId: selectedMentor._id,
-        rating
-      });
-
-      setSuccess('Rating submitted successfully!');
-      setRating(0);
-      await fetchMentors();
-    } catch (err) {
-      setError('Failed to submit rating');
-      console.error('Rating error:', err);
-    }
-  };
-
-  const handleExpertiseFilter = (value: string) => {
-    setSelectedExpertise(value);
-    const filtered = mentors.filter(m =>
-      m.expertise.join(', ').toLowerCase().includes(value.toLowerCase()) &&
-      m.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredMentors(filtered);
-  };
-
-  const handleSortChange = (value: 'rating' | 'availability') => {
-    setSortBy(value);
-    const sorted = [...filteredMentors];
-    if (value === 'rating') {
-      sorted.sort((a, b) => b.rating - a.rating);
-    } else {
-      // availability sort logic placeholder
-    }
-    setFilteredMentors(sorted);
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    const filtered = mentors.filter(m =>
-      m.fullName.toLowerCase().includes(value.toLowerCase()) &&
-      m.expertise.join(', ').toLowerCase().includes(selectedExpertise.toLowerCase())
-    );
-    setFilteredMentors(filtered);
-  };
-
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-NZ', {
       weekday: 'short',
@@ -155,74 +96,29 @@ export default function MentorRecommendationPage() {
     });
   };
 
-  const majorOptions = [
-    'Software Engineering',
-    'Data Science',
-    'Cybersecurity',
-    'Artificial Intelligence',
-    'Information Systems',
-    'Computer Science',
-    'Mathematics',
-    'Physics',
-    'Business Analytics',
-    'Electrical Engineering'
-  ];
-
   return (
     <ProtectedRoute allowedRoles={['student']}>
       <div className="min-h-screen bg-gray-100 p-8">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-2xl font-bold mb-6 text-blue-700">🌟 Recommended Mentors</h1>
 
-          <div className="flex flex-wrap gap-4 items-center mb-6">
-            <div>
-              <label className="block text-sm font-medium mb-1">Sort by:</label>
-              <select
-                className="p-2 border rounded"
-                value={sortBy}
-                onChange={(e) => handleSortChange(e.target.value as 'rating' | 'availability')}
-              >
-                <option value="rating">Rating</option>
-                <option value="availability">Time Available</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Course/Major:</label>
-              <select
-                className="p-2 border rounded"
-                value={selectedExpertise}
-                onChange={(e) => handleExpertiseFilter(e.target.value)}
-              >
-                <option value="">All</option>
-                {majorOptions.map((m, i) => (
-                  <option key={i} value={m}>{m}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">🔍 Search name:</label>
-              <input
-                type="text"
-                placeholder="e.g. mentor name"
-                value={searchTerm}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="p-2 border rounded"
-              />
-            </div>
-          </div>
-
           {error && (
-            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+              {error}
+            </div>
           )}
+
           {success && (
-            <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">{success}</div>
+            <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
+              {success}
+            </div>
           )}
 
           {loading ? (
             <div className="text-center py-4">Loading mentors...</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredMentors.map(mentor => (
+              {mentors.map(mentor => (
                 <div
                   key={mentor._id}
                   className={`bg-white p-6 rounded-xl shadow-md cursor-pointer transition-all ${
@@ -286,30 +182,6 @@ export default function MentorRecommendationPage() {
                   </button>
                 </div>
               )}
-
-              <div className="mt-8">
-                <h2 className="text-lg font-semibold mb-2">Rate This Mentor</h2>
-                <div className="flex items-center mb-4">
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <span
-                      key={star}
-                      onClick={() => setRating(star)}
-                      className={`text-2xl cursor-pointer ${
-                        star <= rating ? 'text-yellow-500' : 'text-gray-300'
-                      }`}
-                    >
-                      ★
-                    </span>
-                  ))}
-                  <span className="ml-2 text-sm text-gray-600">{rating} star(s)</span>
-                </div>
-                <button
-                  onClick={handleRatingSubmit}
-                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-                >
-                  Submit Rating
-                </button>
-              </div>
             </div>
           )}
         </div>
