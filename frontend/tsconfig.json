@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "compilerOptions": {
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
@@ -14,9 +13,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-
-    // ✅ 下面是路径别名设置（关键部分）
-    "baseUrl": ".",                        
+    "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }
@@ -24,19 +21,3 @@
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }
-=======
-    "compilerOptions": {
-      "target": "esnext",
-      "module": "esnext",
-      "jsx": "preserve",
-      "strict": true,
-      "baseUrl": ".",
-      "paths": {
-        "@/*": ["src/*"]
-      }
-    },
-    "exclude": ["node_modules"],
-    "include": ["src"]
-  }
-  
->>>>>>> c44ee711431a68932e62ede115ad1753abfde7bf
