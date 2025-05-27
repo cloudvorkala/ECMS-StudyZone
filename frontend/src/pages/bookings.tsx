@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
+
 import ProtectedRoute from '@/components/ProtectedRoute';
 import api from '@/services/api';
 
@@ -113,31 +115,39 @@ export default function BookingsPage() {
             <pre>{debugInfo}</pre>
           </div>
 
-          {loading ? (
-            <div className="text-center py-4">Loading bookings...</div>
-          ) : bookings.length === 0 ? (
-            <div className="text-center py-4 text-gray-500">No bookings found</div>
-          ) : (
-            <div className="space-y-4">
-              {bookings.map(booking => (
-                <div key={booking._id} className="border rounded-lg p-4 hover:bg-gray-50">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-lg">
-                        Session with {userRole === 'mentor' ? booking.student.fullName : booking.mentor.fullName}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {userRole === 'mentor' ? booking.student.email : booking.mentor.email}
-                      </p>
-                      <p className="mt-2">
-                        <span className="font-medium">Time:</span>{' '}
-                        {formatDateTime(booking.startTime)} - {formatDateTime(booking.endTime)}
-                      </p>
-                      {booking.notes && (
-                        <p className="mt-1 text-sm text-gray-600">
-                          <span className="font-medium">Notes:</span> {booking.notes}
-                        </p>
-                      )}
+
+              <h2 className="text-lg font-semibold text-green-700 mt-8 mb-2">✅ Completed Mentor Sessions</h2>
+              {completedMentor.map(b => (
+                <div key={b.id} className="p-3 bg-gray-50 border rounded mb-4">
+                  <p><strong>Mentor:</strong> {b.mentorName}</p>
+                  <p><strong>Time:</strong> {formatTime(b.startTime)} – {formatTime(b.endTime)}</p>
+                  {!b.rated ? (
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium mb-1">Rate this mentor:</label>
+                      <select
+                        value={ratingInput}
+                        onChange={(e) => setRatingInput(Number(e.target.value))}
+                        className="w-32 border p-1 rounded"
+                      >
+                        <option value={0}>-- Select --</option>
+                        <option value={1}>⭐ 1</option>
+                        <option value={2}>⭐ 2</option>
+                        <option value={3}>⭐ 3</option>
+                        <option value={4}>⭐ 4</option>
+                        <option value={5}>⭐ 5</option>
+                      </select>
+                      <button
+                        onClick={() => setShowFeedbackBox(b.id)}
+                        disabled={ratingInput === 0}
+                        className="ml-3 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+                      >
+                        Confirm
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-2 text-sm text-green-600">
+                      ✅ Thank you for your feedback: &quot;{b.feedback}&quot; (Rating: {b.rating}/5)
+
                     </div>
                     <div className="flex flex-col items-end space-y-2">
                       <span className={`px-3 py-1 rounded-full text-sm ${
