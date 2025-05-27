@@ -26,13 +26,13 @@ import { CalendarModule } from './calendar/calendar.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        uri: process.env.DATABASE_URI || 'mongodb+srv://Claude:testforecms1@cluster-test-1.ks3p3aw.mongodb.net/?retryWrites=true&w=majority&appName=Cluster-test-1',
+        uri: process.env.DATABASE_URI ,
         useNewUrlParser: true,
         useUnifiedTopology: true,
       }),
     }),
 
-    // 功能模块
+    //function module
     AuthModule,
     UsersModule,
     // // MentorsModule,

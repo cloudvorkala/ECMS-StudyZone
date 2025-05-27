@@ -1,4 +1,4 @@
-// ✅ src/pages/bookings.tsx
+//  src/pages/bookings.tsx
 import React, { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useRouter } from 'next/router';
@@ -194,7 +194,7 @@ export default function StudentBookingsPage() {
                     </div>
                   ) : (
                     <div className="mt-2 text-sm text-green-600">
-                      ✅ Thank you for your feedback: "{b.feedback}" (Rating: {b.rating}/5)
+                      ✅ Thank you for your feedback: &quot;{b.feedback}&quot; (Rating: {b.rating}/5)
                     </div>
                   )}
                   {showFeedbackBox === b.id && (

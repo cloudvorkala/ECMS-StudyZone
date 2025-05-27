@@ -25,7 +25,7 @@ async function bootstrap() {
     }),
   );
 
-  // 应用全局认证守卫
+  // apply global authentication guard
   const jwtAuthGuard = app.get(JwtAuthGuard);
   app.useGlobalGuards(jwtAuthGuard);
 
@@ -38,7 +38,7 @@ async function bootstrap() {
     }),
   );
 
-  // 配置 CORS
+  //  CORS
   app.enableCors({
     origin: ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
