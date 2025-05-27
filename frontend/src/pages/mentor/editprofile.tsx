@@ -1,73 +1,65 @@
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import ProtectedRoute from '@/components/ProtectedRoute';
+// ✅ src/pages/api/student/settings.tsx
+// 学生设置页面 - Edit Profile
 
-export default function EditProfile() {
-  const router = useRouter();
-  const [fullName, setFullName] = useState('');
-  const [showPopup, setShowPopup] = useState(false);
+import { useState } from 'react';
 
-  const handleSubmit = (e: React.FormEvent) => {
+export default function StudentSettingsPage() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [major, setMajor] = useState('');
+
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    // Get current user data
-    const userData = JSON.parse(sessionStorage.getItem('user') || '{}');
-    // Update user data
-    const updatedUserData = {
-      ...userData,
-      fullName,
-    };
-    // Save to sessionStorage
-    sessionStorage.setItem('user', JSON.stringify(updatedUserData));
-    setShowPopup(true);
-    setTimeout(() => {
-      setShowPopup(false);
-      router.push('/mentor/profile');
-    }, 3000);
+    alert('✔ Profile saved (demo only)');
   };
 
   return (
-    <ProtectedRoute allowedRoles={['mentor']}>
-      <div className="min-h-screen flex flex-col items-center bg-gray-100 p-8">
-        <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-lg">
-          <h1 className="text-2xl font-bold text-blue-700 mb-4">Edit Profile</h1>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Full Name</label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="mt-1 p-2 w-full border rounded"
-                required
-              />
-            </div>
-
-            {/* Buttons */}
-            <div className="flex space-x-4">
-              <button
-                type="submit"
-                className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
-              >
-                Save Changes
-              </button>
-              <Link href="/mentor/profile" passHref>
-                <button className="w-full bg-gray-600 text-white p-2 rounded hover:bg-gray-700">
-                  Cancel
-                </button>
-              </Link>
-            </div>
-          </form>
-
-          {showPopup && (
-            <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
-              Profile updated successfully!
-            </div>
-          )}
-        </div>
+    <div className="min-h-screen flex justify-center items-center bg-gray-100">
+      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
+        <h1 className="text-2xl font-bold text-blue-700 mb-6">Edit Profile</h1>
+        <form onSubmit={handleSave} className="space-y-4">
+          <input
+            type="text"
+            placeholder="Full Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+          <input
+            type="email"
+            placeholder="Email Address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+          <input
+            type="text"
+            placeholder="Major / Course"
+            value={major}
+            onChange={(e) => setMajor(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+          <div className="flex justify-end gap-4">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              className="border border-gray-400 text-gray-600 px-4 py-2 rounded hover:bg-gray-100"
+              onClick={() => {
+                setName('');
+                setEmail('');
+                setMajor('');
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
-    </ProtectedRoute>
+    </div>
   );
 }
