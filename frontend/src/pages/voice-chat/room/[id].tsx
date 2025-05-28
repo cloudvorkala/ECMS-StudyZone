@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Device } from '@twilio/voice-sdk';
+import api from '@/services/api';
 
 interface Participant {
   identity: string;
@@ -16,44 +17,58 @@ export default function VoiceRoom() {
   const [isMuted, setIsMuted] = useState(false);
   const [error, setError] = useState('');
 
+  const leaveRoom = useCallback(() => {
+    if (device) {
+      device.disconnectAll();
+      device.destroy();
+    }
+    router.push('/voice-chat');
+  }, [device, router]);
+
+  const toggleMute = useCallback(() => {
+    if (device) {
+      if (isMuted) {
+        device.audio?.setMute(false);
+      } else {
+        device.audio?.setMute(true);
+      }
+      setIsMuted(!isMuted);
+      setParticipants(prev =>
+        prev.map(p =>
+          p.identity === 'You' ? { ...p, isMuted: !isMuted } : p
+        )
+      );
+    }
+  }, [device, isMuted]);
+
   useEffect(() => {
     if (!roomId) return;
 
     const initializeVoice = async () => {
       try {
-        const token = sessionStorage.getItem('token');
-        if (!token) {
-          throw new Error('No token found');
-        }
+        // Get Twilio token from backend
+        console.log('Fetching token for room:', roomId);
 
-        // get token
-        const response = await fetch(`/api/voice/token/${roomId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await api.get<{ token: string }>(`/api/voice/token/${roomId}`);
+        console.log('Token response:', response.data);
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to get token');
-        }
-
-        const data = await response.json();
-        if (!data.token) {
+        if (!response.data.token) {
           throw new Error('No token in response');
         }
 
-        // Initialize Twilio device
-        const newDevice = new Device(data.token);
+        // Initialize Twilio device with configuration
+        const newDevice = new Device(response.data.token, {
+          codecPreferences: ['opus', 'pcmu'],
+          enableRingingState: true,
+        });
 
         // Set up event listeners
         newDevice.on('ready', () => {
           console.log('Twilio device is ready');
-          // Add current user to participants list
           setParticipants([{ identity: 'You', isMuted: false }]);
         });
 
-        newDevice.on('error', (error: unknown) => {
+        newDevice.on('error', (error) => {
           console.error('Twilio device error:', error);
           setError('Connection error occurred');
         });
@@ -63,7 +78,7 @@ export default function VoiceRoom() {
           router.push('/voice-chat');
         });
 
-        // Connect to room
+        // Connect to voice room
         await newDevice.connect({ params: { roomId: roomId as string } });
         setDevice(newDevice);
 
@@ -75,38 +90,14 @@ export default function VoiceRoom() {
 
     initializeVoice();
 
-    // Cleanup function
+    // Cleanup function to destroy device when component unmounts
     return () => {
       if (device) {
+        device.disconnectAll();
         device.destroy();
       }
     };
-  }, [roomId]);
-
-  const leaveRoom = () => {
-    if (device) {
-      device.disconnectAll();
-      device.destroy();
-    }
-    router.push('/voice-chat');
-  };
-
-  const toggleMute = () => {
-    if (device) {
-      if (isMuted) {
-        device.audio?.setMute(false);
-      } else {
-        device.audio?.setMute(true);
-      }
-      setIsMuted(!isMuted);
-      // Update participants list with mute status
-      setParticipants(prev =>
-        prev.map(p =>
-          p.identity === 'You' ? { ...p, isMuted: !isMuted } : p
-        )
-      );
-    }
-  };
+  }, [roomId, router, device]); // Add all dependencies
 
   return (
     <ProtectedRoute allowedRoles={['student', 'mentor']}>

@@ -6,7 +6,7 @@ interface CreateRoomDto {
   name: string;
 }
 
-@Controller('api/voice')
+@Controller('voice')
 @UseGuards(JwtAuthGuard)
 export class VoiceController {
   constructor(private readonly voiceService: VoiceService) {}
@@ -23,6 +23,8 @@ export class VoiceController {
 
   @Get('token/:roomId')
   async getToken(@Param('roomId') roomId: string, @Request() req) {
+    console.log('Getting token for room:', roomId);
+    console.log('User:', req.user);
     return this.voiceService.generateToken(roomId, req.user.email);
   }
 }
