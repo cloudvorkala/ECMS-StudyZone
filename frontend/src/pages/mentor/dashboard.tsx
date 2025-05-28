@@ -217,6 +217,15 @@ export default function MentorDashboard() {
               </div>
             )}
           </div>
+
+          {/* Voice Chat Card */}
+          <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+            <h3 className="text-xl font-semibold mb-4">Voice Chat</h3>
+            <p className="text-gray-600 mb-4">Join voice chat rooms for real-time communication with students.</p>
+            <Link href="/voice-chat" className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+              Go to Voice Chat
+            </Link>
+          </div>
         </div>
       </div>
     </ProtectedRoute>
