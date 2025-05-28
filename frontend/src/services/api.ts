@@ -1,7 +1,7 @@
 import axios from 'axios';
 import https from 'https';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:3000';
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'https://localhost:3000') + '/api';
 
 console.log('API Base URL:', API_BASE_URL);
 

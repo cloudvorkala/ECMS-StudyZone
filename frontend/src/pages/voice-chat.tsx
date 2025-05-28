@@ -25,7 +25,7 @@ export default function VoiceChat() {
 
   const fetchRooms = async () => {
     try {
-      const response = await api.get<VoiceRoom[]>('/api/voice/rooms');
+      const response = await api.get<VoiceRoom[]>('/voice/rooms');
       setVoiceRooms(response.data);
       setIsLoading(false);
     } catch (err) {
@@ -40,7 +40,7 @@ export default function VoiceChat() {
     if (!newRoomName.trim()) return;
 
     try {
-      const response = await api.post<VoiceRoom>('/api/voice/rooms', { name: newRoomName });
+      const response = await api.post<VoiceRoom>('/voice/rooms', { name: newRoomName });
       setVoiceRooms([...voiceRooms, response.data]);
       setNewRoomName('');
     } catch (err) {
@@ -52,7 +52,7 @@ export default function VoiceChat() {
   const joinRoom = async (roomId: string) => {
     try {
       // Get Twilio token
-      const tokenResponse = await api.get<{ token: string }>(`/api/voice/token/${roomId}`);
+      const tokenResponse = await api.get<{ token: string }>(`/voice/token/${roomId}`);
       // Store token and room info
       sessionStorage.setItem('twilioToken', tokenResponse.data.token);
       sessionStorage.setItem('currentRoom', roomId);

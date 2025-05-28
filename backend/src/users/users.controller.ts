@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, ConflictException, UseGuards, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, NotFoundException, ConflictException, UseGuards, Logger, Put, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { RegisterMentorDto } from './dto/register-mentor.dto';
@@ -83,5 +83,12 @@ export class UsersController {
       throw new NotFoundException('User not found');
     }
     return user;
+  }
+
+  @Put('mentor/profile')
+  @Roles('mentor')
+  async updateMentorProfile(@Request() req, @Body() updateData: Partial<User>) {
+    this.logger.debug(`Updating mentor profile for user: ${req.user.id}`);
+    return this.usersService.updateMentorProfile(req.user.id, updateData);
   }
 }
