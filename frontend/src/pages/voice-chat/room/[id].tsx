@@ -41,63 +41,68 @@ export default function VoiceRoom() {
     }
   }, [device, isMuted]);
 
-  useEffect(() => {
-    if (!roomId) return;
+//
+useEffect(() => {
+  if (!roomId) return;
 
-    const initializeVoice = async () => {
-      try {
-        // Get Twilio token from backend
-        console.log('Fetching token for room:', roomId);
+  let currentDevice: Device | null = null;
 
-        const response = await api.get<{ token: string }>(`/api/voice/token/${roomId}`);
-        console.log('Token response:', response.data);
+  const initializeVoice = async () => {
+    try {
+      // Get Twilio token from backend
+      console.log('Fetching token for room:', roomId);
 
-        if (!response.data.token) {
-          throw new Error('No token in response');
-        }
+      const response = await api.get<{ token: string }>(`/api/voice/token/${roomId}`);
+      console.log('Token response:', response.data);
 
-        // Initialize Twilio device with configuration
-        const newDevice = new Device(response.data.token, {
-          codecPreferences: ['opus', 'pcmu'],
-          enableRingingState: true,
-        });
-
-        // Set up event listeners
-        newDevice.on('ready', () => {
-          console.log('Twilio device is ready');
-          setParticipants([{ identity: 'You', isMuted: false }]);
-        });
-
-        newDevice.on('error', (error) => {
-          console.error('Twilio device error:', error);
-          setError('Connection error occurred');
-        });
-
-        newDevice.on('disconnect', () => {
-          console.log('Disconnected from room');
-          router.push('/voice-chat');
-        });
-
-        // Connect to voice room
-        await newDevice.connect({ params: { roomId: roomId as string } });
-        setDevice(newDevice);
-
-      } catch (err) {
-        console.error('Error initializing voice:', err);
-        setError('Failed to connect to voice room');
+      if (!response.data.token) {
+        throw new Error('No token in response');
       }
-    };
 
-    initializeVoice();
+      // Initialize Twilio device with configuration
+      const newDevice = new Device(response.data.token, {
+        codecPreferences: ['opus', 'pcmu'],
+        enableRingingState: true,
+      });
+
+      // Set up event listeners
+      newDevice.on('ready', () => {
+        console.log('Twilio device is ready');
+        setParticipants([{ identity: 'You', isMuted: false }]);
+      });
+
+      newDevice.on('error', (error) => {
+        console.error('Twilio device error:', error);
+        setError('Connection error occurred');
+      });
+
+      newDevice.on('disconnect', () => {
+        console.log('Disconnected from room');
+        router.push('/voice-chat');
+      });
+
+      // Connect to voice room
+      await newDevice.connect({ params: { roomId: roomId as string } });
+
+      currentDevice = newDevice;
+      setDevice(newDevice);
+
+    } catch (err) {
+      console.error('Error initializing voice:', err);
+      setError('Failed to connect to voice room');
+    }
+  };
+
+  initializeVoice();
 
     // Cleanup function to destroy device when component unmounts
     return () => {
-      if (device) {
-        device.disconnectAll();
-        device.destroy();
+      if (currentDevice) {
+        currentDevice.disconnectAll();
+        currentDevice.destroy();
       }
     };
-  }, [roomId, router, device]); // Add all dependencies
+  }, [roomId, router]); // Add all dependencies
 
   return (
     <ProtectedRoute allowedRoles={['student', 'mentor']}>
