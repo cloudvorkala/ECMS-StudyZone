@@ -5,58 +5,92 @@ import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import * as session from 'express-session';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import * as fs from 'fs';
+import * as path from 'path';
+import { HttpsOptions } from '@nestjs/common/interfaces/external/https-options.interface';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  try {
+    console.log('Starting server initialization...');
+    console.log('Reading SSL certificates...');
 
-  const configService = app.get(ConfigService);
+    const certPath = path.join(__dirname, '../certificates/certificate.crt');
+    const keyPath = path.join(__dirname, '../certificates/private.key');
 
-  // add session middleware
-  app.use(
-    session({
-      secret: configService.get<string>('SESSION_SECRET') || 'super-secret',
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        secure: false, // set true if using HTTPS
-        httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 2, // 2 hours
-      },
-    }),
-  );
+    console.log('Certificate path:', certPath);
+    console.log('Key path:', keyPath);
 
-  // apply global authentication guard
-  const jwtAuthGuard = app.get(JwtAuthGuard);
-  app.useGlobalGuards(jwtAuthGuard);
+    if (!fs.existsSync(certPath) || !fs.existsSync(keyPath)) {
+      throw new Error('SSL certificates not found!');
+    }
 
-  app.setGlobalPrefix('api');
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: true,
-    }),
-  );
+    const httpsOptions: HttpsOptions = {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath),
+    };
 
-  //  CORS
-  app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  });
+    console.log('Creating NestJS application with HTTPS...');
+    const app = await NestFactory.create(AppModule, {
+      httpsOptions,
+    });
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Mentor Match API')
-    .setDescription('The Mentor Match API Documentation')
-    .setVersion('1.0')
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document);
+    const configService = app.get(ConfigService);
 
-  const port = configService.get<number>('port', 3000);
-  await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`Swagger documentation is available at: http://localhost:${port}/api/docs`);
+    console.log('Configuring session middleware...');
+    app.use(
+      session({
+        secret: configService.get<string>('SESSION_SECRET') || 'super-secret',
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+          secure: true,
+          httpOnly: true,
+          maxAge: 1000 * 60 * 60 * 2,
+        },
+      }),
+    );
+
+    console.log('Setting up global guards and pipes...');
+    const jwtAuthGuard = app.get(JwtAuthGuard);
+    app.useGlobalGuards(jwtAuthGuard);
+
+    app.setGlobalPrefix('api');
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
+
+    console.log('Configuring CORS...');
+    app.enableCors({
+      origin: ['https://localhost:3000', 'https://localhost:3001'],
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+    });
+
+    console.log('Setting up Swagger documentation...');
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Mentor Match API')
+      .setDescription('The Mentor Match API Documentation')
+      .setVersion('1.0')
+      .build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, document);
+
+    const port = configService.get<number>('port', 3000);
+
+    console.log('Starting server...');
+    await app.listen(port);
+    console.log('=================================');
+    console.log(`Server is running on: https://localhost:${port}`);
+    console.log(`Swagger docs: https://localhost:${port}/api/docs`);
+    console.log('=================================');
+  } catch (error) {
+    console.error('Error starting server:', error);
+    process.exit(1);
+  }
 }
 bootstrap();
