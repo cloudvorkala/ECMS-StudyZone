@@ -52,7 +52,7 @@ useEffect(() => {
       // Get Twilio token from backend
       console.log('Fetching token for room:', roomId);
 
-      const response = await api.get<{ token: string }>(`/api/voice/token/${roomId}`);
+      const response = await api.get<{ token: string }>(`/voice/token/${roomId}`);
       console.log('Token response:', response.data);
 
       if (!response.data.token) {

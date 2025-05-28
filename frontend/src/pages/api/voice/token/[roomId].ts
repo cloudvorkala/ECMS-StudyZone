@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { roomId } = req.query;
     console.log('Fetching token for room:', roomId);
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/voice/token/${roomId}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/voice/token/${roomId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },

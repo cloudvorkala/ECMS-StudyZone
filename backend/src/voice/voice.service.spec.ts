@@ -106,12 +106,76 @@ describe('VoiceService', () => {
   });
 
   describe('generateToken', () => {
-    it('should generate a token for a room', async () => {
+    it('should generate a valid Twilio token for a room', async () => {
       const roomId = 'test-room';
       const identity = 'test@example.com';
+
+      // Validate required environment variables
+      const requiredEnvVars = [
+        'TWILIO_ACCOUNT_SID',
+        'TWILIO_API_KEY',
+        'TWILIO_API_SECRET',
+        'TWILIO_TWIML_APP_SID'
+      ];
+
+      const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+      if (missingVars.length > 0) {
+        throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
+      }
+
       const result = await service.generateToken(roomId, identity);
+
+      // Basic validation
       expect(result).toBeDefined();
       expect(result.token).toBeDefined();
+      expect(typeof result.token).toBe('string');
+
+      // Decode and validate token structure
+      const tokenParts = result.token.split('.');
+      expect(tokenParts.length).toBe(3); // JWT should have header, payload, and signature
+
+      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+
+      // Validate token claims
+      expect(payload.iss).toBe(process.env.TWILIO_ACCOUNT_SID); // Account SID is the issuer
+      expect(payload.sub).toBe(process.env.TWILIO_API_KEY); // API Key is the subject
+      expect(payload.grants).toBeDefined();
+      expect(payload.grants.voice).toBeDefined();
+      expect(payload.grants.voice.outgoing).toBeDefined();
+      expect(payload.grants.voice.outgoing.application_sid).toBe(process.env.TWILIO_TWIML_APP_SID);
+      expect(payload.grants.voice.incoming).toBeDefined();
+      expect(payload.grants.voice.incoming.allow).toBe(true);
+
+      // Validate expiration (should be within 1 hour)
+      const now = Math.floor(Date.now() / 1000);
+      expect(payload.exp).toBeGreaterThan(now);
+      expect(payload.exp).toBeLessThanOrEqual(now + 3600); // Allow exact match at 1 hour
+    });
+
+    it('should throw error when Twilio credentials are missing', async () => {
+      const roomId = 'test-room';
+      const identity = 'test@example.com';
+
+      // Save original env vars
+      const originalEnv = {
+        TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
+        TWILIO_API_KEY: process.env.TWILIO_API_KEY,
+        TWILIO_API_SECRET: process.env.TWILIO_API_SECRET,
+        TWILIO_TWIML_APP_SID: process.env.TWILIO_TWIML_APP_SID
+      };
+
+      try {
+        // Clear environment variables
+        delete process.env.TWILIO_ACCOUNT_SID;
+        delete process.env.TWILIO_API_KEY;
+        delete process.env.TWILIO_API_SECRET;
+        delete process.env.TWILIO_TWIML_APP_SID;
+
+        await expect(service.generateToken(roomId, identity)).rejects.toThrow();
+      } finally {
+        // Restore original env vars
+        Object.assign(process.env, originalEnv);
+      }
     });
   });
 

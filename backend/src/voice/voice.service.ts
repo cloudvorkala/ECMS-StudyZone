@@ -41,9 +41,9 @@ export class VoiceService {
 
     // Create access token with Twilio credentials
     const accessToken = new AccessToken(
-      process.env.TWILIO_ACCOUNT_SID as string,
-      process.env.TWILIO_API_KEY as string,
-      process.env.TWILIO_API_SECRET as string,
+      process.env.TWILIO_API_KEY as string,      // API Key as issuer
+      process.env.TWILIO_ACCOUNT_SID as string,  // Account SID as subject
+      process.env.TWILIO_API_SECRET as string,   // API Secret
       { identity }
     );
 
