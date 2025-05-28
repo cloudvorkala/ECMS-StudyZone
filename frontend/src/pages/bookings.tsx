@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -35,6 +34,17 @@ export default function BookingsPage() {
   const [error, setError] = useState('');
   const [debugInfo, setDebugInfo] = useState('');
   const [userRole, setUserRole] = useState<string>('');
+  const [completedMentor, setCompletedMentor] = useState<Array<{
+    id: string;
+    mentorName: string;
+    startTime: string;
+    endTime: string;
+    rated: boolean;
+    rating?: number;
+    feedback?: string;
+  }>>([]);
+  const [ratingInput, setRatingInput] = useState<number>(0);
+  const [showFeedbackBox, setShowFeedbackBox] = useState<string | null>(null);
 
   useEffect(() => {
     const user = sessionStorage.getItem('user');
@@ -59,6 +69,18 @@ export default function BookingsPage() {
         const response = await api.get<Booking[]>(endpoint);
         setDebugInfo(prev => `${prev}\nResponse received: ${JSON.stringify(response.data)}`);
         setBookings(response.data);
+
+        // Set completed mentor sessions
+        const completed = response.data
+          .filter(booking => booking.status === 'confirmed')
+          .map(booking => ({
+            id: booking._id,
+            mentorName: booking.mentor.fullName,
+            startTime: booking.startTime,
+            endTime: booking.endTime,
+            rated: false
+          }));
+        setCompletedMentor(completed);
       }
       setError('');
     } catch (err: unknown) {
@@ -77,7 +99,7 @@ export default function BookingsPage() {
       setDebugInfo(`Updating booking ${bookingId} status to ${newStatus}...`);
       await api.post(`/bookings/${bookingId}/status`, { status: newStatus });
       setDebugInfo(prev => `${prev}\nStatus updated successfully`);
-      await fetchBookings(); // Refresh the list
+      await fetchBookings();
     } catch (err: unknown) {
       const error = err as ApiError;
       const errorMessage = error.response?.data?.message || error.message || 'Failed to update booking status';
@@ -93,6 +115,13 @@ export default function BookingsPage() {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-NZ', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -115,7 +144,10 @@ export default function BookingsPage() {
             <pre>{debugInfo}</pre>
           </div>
 
-
+          {loading ? (
+            <div>Loading...</div>
+          ) : (
+            <div>
               <h2 className="text-lg font-semibold text-green-700 mt-8 mb-2">✅ Completed Mentor Sessions</h2>
               {completedMentor.map(b => (
                 <div key={b.id} className="p-3 bg-gray-50 border rounded mb-4">
@@ -143,11 +175,41 @@ export default function BookingsPage() {
                       >
                         Confirm
                       </button>
+                      {showFeedbackBox === b.id && (
+                        <div className="mt-2">
+                          <textarea
+                            className="w-full p-2 border rounded"
+                            placeholder="Enter your feedback..."
+                            rows={3}
+                          />
+                          <button
+                            onClick={() => {
+                              // TODO: Submit feedback
+                              setShowFeedbackBox(null);
+                            }}
+                            className="mt-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                          >
+                            Submit Feedback
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="mt-2 text-sm text-green-600">
                       ✅ Thank you for your feedback: &quot;{b.feedback}&quot; (Rating: {b.rating}/5)
+                    </div>
+                  )}
+                </div>
+              ))}
 
+              <h2 className="text-lg font-semibold text-blue-700 mt-8 mb-2">📅 Upcoming Bookings</h2>
+              {bookings.map(booking => (
+                <div key={booking._id} className="p-3 bg-gray-50 border rounded mb-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p><strong>Mentor:</strong> {booking.mentor.fullName}</p>
+                      <p><strong>Time:</strong> {formatDateTime(booking.startTime)}</p>
+                      <p><strong>Status:</strong> {booking.status}</p>
                     </div>
                     <div className="flex flex-col items-end space-y-2">
                       <span className={`px-3 py-1 rounded-full text-sm ${
