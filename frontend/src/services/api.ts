@@ -11,7 +11,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true,
-  // 在开发环境中忽略 SSL 证书错误
+  // ignore SSL certificate errors in development environment
   ...(process.env.NODE_ENV === 'development' ? {
     httpsAgent: new https.Agent({
       rejectUnauthorized: false

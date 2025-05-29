@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import api from '@/services/api';
+import Link from 'next/link';
 
 interface TimeSlot {
   _id: string;
@@ -118,7 +119,15 @@ export default function CalendarPage() {
     <ProtectedRoute allowedRoles={['mentor']}>
       <div className="min-h-screen bg-gray-100 p-8">
         <div className="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
-          <h1 className="text-2xl font-bold mb-6 text-blue-700">📆 Manage Availability</h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold text-blue-700">📆 Manage Availability</h1>
+            <Link
+              href="/mentor/dashboard"
+              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+            >
+              ← Back to Dashboard
+            </Link>
+          </div>
 
           {error && (
             <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">

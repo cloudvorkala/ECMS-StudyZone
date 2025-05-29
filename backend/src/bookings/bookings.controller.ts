@@ -99,4 +99,37 @@ export class BookingsController {
       .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
       .slice(0, 5);
   }
+
+  @Post(':id/reschedule')
+  @Roles('student')
+  async rescheduleBooking(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() newTimeSlot: { startTime: string; endTime: string },
+  ): Promise<Booking> {
+    this.logger.debug(`Rescheduling booking ${id} for student: ${req.user.id}`);
+    try {
+      return await this.bookingsService.reschedule(id, req.user.id, newTimeSlot);
+    } catch (error: unknown) {
+      const err = error as ErrorWithMessage;
+      this.logger.error(`Error rescheduling booking: ${err.message}`, err.stack);
+      throw error;
+    }
+  }
+
+  @Post(':id/cancel')
+  @Roles('student')
+  async cancelBooking(
+    @Request() req,
+    @Param('id') id: string,
+  ): Promise<Booking> {
+    this.logger.debug(`Cancelling booking ${id} for student: ${req.user.id}`);
+    try {
+      return await this.bookingsService.cancel(id, req.user.id);
+    } catch (error: unknown) {
+      const err = error as ErrorWithMessage;
+      this.logger.error(`Error cancelling booking: ${err.message}`, err.stack);
+      throw error;
+    }
+  }
 }

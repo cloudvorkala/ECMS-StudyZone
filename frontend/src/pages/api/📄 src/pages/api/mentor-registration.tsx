@@ -1,5 +1,5 @@
-// ✅ src/pages/api/mentor-registration.tsx
-// 导师注册申请页面：填写信息后提交，进入等待审批状态
+
+
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
@@ -22,10 +22,10 @@ export default function MentorRegistrationPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // TODO: 替换为后端真实API请求
+
       console.log('Mentor application submitted:', form);
       setSubmitted(true);
-      setTimeout(() => router.push('/'), 2000); // 2秒后跳回登录页
+      setTimeout(() => router.push('/'), 2000);
     } catch (err) {
       alert('Failed to submit application');
       console.error(err);
