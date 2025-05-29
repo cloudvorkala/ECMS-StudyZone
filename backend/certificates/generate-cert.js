@@ -2,8 +2,8 @@ const forge = require('node-forge');
 const fs = require('fs');
 const path = require('path');
 
-// Generate a new key pair
-const keys = forge.pki.rsa.generateKeyPair(2048);
+// Generate a new key pair with 4096 bits for stronger security
+const keys = forge.pki.rsa.generateKeyPair(4096);
 
 // Create a new certificate
 const cert = forge.pki.createCertificate();
@@ -47,10 +47,20 @@ cert.setExtensions([{
     type: 7, // IP
     ip: '127.0.0.1'
   }]
+}, {
+  name: 'basicConstraints',
+  cA: true
+}, {
+  name: 'keyUsage',
+  keyCertSign: true,
+  digitalSignature: true,
+  nonRepudiation: true,
+  keyEncipherment: true,
+  dataEncipherment: true
 }]);
 
-// Self-sign the certificate
-cert.sign(keys.privateKey);
+// Self-sign the certificate with SHA-512
+cert.sign(keys.privateKey, forge.md.sha512.create());
 
 // Convert to PEM format
 const privateKeyPem = forge.pki.privateKeyToPem(keys.privateKey);

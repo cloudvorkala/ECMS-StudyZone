@@ -11,12 +11,12 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true,
-  // Ignore SSL certificate errors in development
-  ...(process.env.NODE_ENV === 'development' && {
+  // 在开发环境中忽略 SSL 证书错误
+  ...(process.env.NODE_ENV === 'development' ? {
     httpsAgent: new https.Agent({
       rejectUnauthorized: false
     })
-  })
+  } : {})
 });
 
 // Request interceptor
