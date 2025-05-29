@@ -132,4 +132,10 @@ export class BookingsController {
       throw error;
     }
   }
+
+  @Get('mentor/:mentorId/all')
+  async getMentorBookings(@Param('mentorId') mentorId: string): Promise<Booking[]> {
+    this.logger.debug(`Getting all bookings for mentor: ${mentorId}`);
+    return this.bookingsService.findByMentor(mentorId);
+  }
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import api from '@/services/api';
+import { useRouter } from 'next/router';
 
 interface Mentor {
   _id: string;
@@ -17,10 +18,28 @@ interface TimeSlot {
   endTime: string;
 }
 
+interface Booking {
+  _id: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+}
+
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 export default function MentorRecommendationPage() {
+  const router = useRouter();
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(true);
@@ -54,10 +73,40 @@ export default function MentorRecommendationPage() {
     }
   };
 
+  const fetchBookings = async (mentorId: string) => {
+    try {
+      const response = await api.get<Booking[]>(`/bookings/mentor/${mentorId}/all`);
+      setBookings(response.data);
+    } catch (err) {
+      console.error('Error fetching bookings:', err);
+    }
+  };
+
   const handleMentorSelect = async (mentor: Mentor) => {
     setSelectedMentor(mentor);
     setSelectedTimeSlot(null);
-    await fetchTimeSlots(mentor._id);
+    await Promise.all([
+      fetchTimeSlots(mentor._id),
+      fetchBookings(mentor._id)
+    ]);
+  };
+
+  const isTimeSlotBooked = (slot: TimeSlot) => {
+    const slotStart = new Date(slot.startTime);
+    const slotEnd = new Date(slot.endTime);
+
+    return bookings.some(booking => {
+      if (booking.status === 'cancelled') return false;
+
+      const bookingStart = new Date(booking.startTime);
+      const bookingEnd = new Date(booking.endTime);
+
+      return (
+        (slotStart >= bookingStart && slotStart < bookingEnd) ||
+        (slotEnd > bookingStart && slotEnd <= bookingEnd) ||
+        (slotStart <= bookingStart && slotEnd >= bookingEnd)
+      );
+    });
   };
 
   const handleBooking = async () => {
@@ -66,22 +115,45 @@ export default function MentorRecommendationPage() {
       return;
     }
 
+    if (isTimeSlotBooked(selectedTimeSlot)) {
+      setError('This time slot is already booked');
+      return;
+    }
+
     try {
-      await api.post('/bookings', {
+      // Get current user information
+      const user = sessionStorage.getItem('user');
+      if (!user) {
+        throw new Error('User not logged in');
+      }
+
+      const userData = JSON.parse(user);
+
+      // Verify if user is a student
+      if (userData.role !== 'student') {
+        throw new Error('Only students can create bookings');
+      }
+
+      const bookingData = {
         mentorId: selectedMentor._id,
         startTime: selectedTimeSlot.startTime,
         endTime: selectedTimeSlot.endTime,
-        notes
-      });
+        notes: notes || undefined
+      };
+
+      await api.post('/bookings', bookingData);
 
       setSuccess('Booking request sent successfully!');
       setSelectedMentor(null);
       setSelectedTimeSlot(null);
       setNotes('');
       setTimeSlots([]);
-    } catch (err) {
-      setError('Failed to create booking');
-      console.error('Error creating booking:', err);
+      setBookings([]);
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create booking';
+      setError(errorMessage);
+      console.error('Error creating booking:', error);
     }
   };
 
@@ -100,7 +172,15 @@ export default function MentorRecommendationPage() {
     <ProtectedRoute allowedRoles={['student']}>
       <div className="min-h-screen bg-gray-100 p-8">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6 text-blue-700">🌟 Recommended Mentors</h1>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-blue-700">🌟 Recommended Mentors</h1>
+            <button
+              onClick={() => router.back()}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              ← Back
+            </button>
+          </div>
 
           {error && (
             <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
@@ -147,21 +227,29 @@ export default function MentorRecommendationPage() {
                 <p className="text-gray-500">No available time slots found</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {timeSlots.map(slot => (
-                    <div
-                      key={slot._id}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        selectedTimeSlot?._id === slot._id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-blue-300'
-                      }`}
-                      onClick={() => setSelectedTimeSlot(slot)}
-                    >
-                      <p className="font-medium">
-                        {formatDateTime(slot.startTime)} - {formatDateTime(slot.endTime)}
-                      </p>
-                    </div>
-                  ))}
+                  {timeSlots.map(slot => {
+                    const isBooked = isTimeSlotBooked(slot);
+                    return (
+                      <div
+                        key={slot._id}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                          selectedTimeSlot?._id === slot._id
+                            ? 'border-blue-500 bg-blue-50'
+                            : isBooked
+                            ? 'border-red-200 bg-red-50'
+                            : 'border-gray-200 hover:border-blue-300'
+                        }`}
+                        onClick={() => !isBooked && setSelectedTimeSlot(slot)}
+                      >
+                        <p className="font-medium">
+                          {formatDateTime(slot.startTime)} - {formatDateTime(slot.endTime)}
+                        </p>
+                        {isBooked && (
+                          <p className="text-sm text-red-500 mt-1">This time slot is booked</p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
