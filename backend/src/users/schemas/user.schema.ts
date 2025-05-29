@@ -30,19 +30,34 @@ export class User extends Document {
   degree?: string;
 
   @Prop()
+  major?: string;
+
+  @Prop()
+  year?: string;
+
+  @Prop()
   specialty?: string;
 
   @Prop({ type: [String], default: [] })
   expertise!: string[];
 
+  @Prop({ type: [String], default: [] })
+  interests!: string[];
+
   @Prop()
   institution?: string;
+
+  @Prop()
+  bio?: string;
 
   @Prop({ default: 0 })
   rating!: number;
 
   @Prop({ default: Date.now })
   createdAt!: Date;
+
+  @Prop({ default: Date.now })
+  updatedAt!: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

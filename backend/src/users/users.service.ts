@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { UpdateStudentProfileDto } from './dto/update-student-profile.dto';
 
 @Injectable()
 export class UsersService {
@@ -51,5 +52,35 @@ export class UsersService {
     }
 
     return updatedUser;
+  }
+
+  async updateStudentProfile(userId: string, updateData: UpdateStudentProfileDto) {
+    try {
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Update user fields
+      Object.assign(user, updateData);
+      await user.save();
+
+      return {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        degree: user.degree,
+        major: user.major,
+        year: user.year,
+        institution: user.institution,
+        interests: user.interests
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+      throw new Error('Failed to update student profile');
+    }
   }
 }

@@ -27,7 +27,7 @@ export default function StudentDashboard() {
           <Link href="/voice-chat" className="block p-4 bg-purple-100 rounded-lg hover:bg-purple-200">
             🎤 Voice Chat
           </Link>
-          <Link href="/settings" className="block p-4 bg-gray-200 rounded-lg hover:bg-gray-300">
+          <Link href="/student/editprofile" className="block p-4 bg-gray-200 rounded-lg hover:bg-gray-300">
             ⚙️ Edit Profile
           </Link>
            {/* Log Out Button */}
