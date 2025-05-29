@@ -7,10 +7,12 @@ import { Dialog } from '@headlessui/react';
 interface Booking {
   _id: string;
   student: {
+    _id: string;
     fullName: string;
     email: string;
   };
   mentor: {
+    _id: string;
     fullName: string;
     email: string;
   };
@@ -18,6 +20,12 @@ interface Booking {
   endTime: string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'rescheduled' | 'completed';
   notes?: string;
+}
+
+interface TimeSlot {
+  _id: string;
+  startTime: string;
+  endTime: string;
 }
 
 interface ApiError {
@@ -37,8 +45,8 @@ export default function BookingsPage() {
   const [userRole, setUserRole] = useState<string>('');
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-  const [newStartTime, setNewStartTime] = useState('');
-  const [newEndTime, setNewEndTime] = useState('');
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
 
   useEffect(() => {
     const user = sessionStorage.getItem('user');
@@ -61,8 +69,9 @@ export default function BookingsPage() {
         const userData = JSON.parse(user);
         const endpoint = userData.role === 'mentor' ? '/bookings/mentor' : '/bookings/student';
         const response = await api.get<Booking[]>(endpoint);
-        setDebugInfo(prev => `${prev}\nResponse received: ${JSON.stringify(response.data)}`);
-        setBookings(response.data);
+        const activeBookings = response.data.filter(booking => booking.status !== 'cancelled');
+        setDebugInfo(prev => `${prev}\nResponse received: ${JSON.stringify(activeBookings)}`);
+        setBookings(activeBookings);
       }
       setError('');
     } catch (err: unknown) {
@@ -73,6 +82,40 @@ export default function BookingsPage() {
       console.error('Error fetching bookings:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAvailableTimeSlots = async (mentorId: string) => {
+    try {
+      const [timeSlotsResponse, bookingsResponse] = await Promise.all([
+        api.get<TimeSlot[]>(`/calendar/mentor/${mentorId}`),
+        api.get<Booking[]>(`/bookings/mentor/${mentorId}/all`)
+      ]);
+
+      const bookedTimeSlots = bookingsResponse.data.filter(booking =>
+        booking.status !== 'cancelled' && booking._id !== selectedBooking?._id
+      );
+
+      const availableSlots = timeSlotsResponse.data.filter(slot => {
+        const slotStart = new Date(slot.startTime);
+        const slotEnd = new Date(slot.endTime);
+
+        return !bookedTimeSlots.some(booking => {
+          const bookingStart = new Date(booking.startTime);
+          const bookingEnd = new Date(booking.endTime);
+
+          return (
+            (slotStart >= bookingStart && slotStart < bookingEnd) ||
+            (slotEnd > bookingStart && slotEnd <= bookingEnd) ||
+            (slotStart <= bookingStart && slotEnd >= bookingEnd)
+          );
+        });
+      });
+
+      setAvailableTimeSlots(availableSlots);
+    } catch (err) {
+      console.error('Error fetching time slots:', err);
+      setError('Failed to fetch available time slots');
     }
   };
 
@@ -92,7 +135,7 @@ export default function BookingsPage() {
   };
 
   const handleReschedule = async () => {
-    if (!selectedBooking) return;
+    if (!selectedBooking || !selectedTimeSlot) return;
 
     try {
       setDebugInfo(`Rescheduling booking ${selectedBooking._id}...`);
@@ -104,24 +147,39 @@ export default function BookingsPage() {
       }
 
       const userData = JSON.parse(user);
+      setDebugInfo(prev => `${prev}\nUser data: ${JSON.stringify(userData, null, 2)}`);
+      setDebugInfo(prev => `${prev}\nSelected booking student: ${JSON.stringify(selectedBooking.student, null, 2)}`);
+      setDebugInfo(prev => `${prev}\nJWT Token: ${sessionStorage.getItem('token')}`);
 
       // Verify if user is a student
       if (userData.role !== 'student') {
         throw new Error('Only students can reschedule bookings');
       }
 
+      // Get the student ID from the booking
+      const studentId = typeof selectedBooking.student === 'string'
+        ? selectedBooking.student
+        : selectedBooking.student._id;
+
+      setDebugInfo(prev => `${prev}\nStudent ID comparison: ${studentId} === ${userData.id}`);
+
       // Verify if user is the student who made the booking
-      if (selectedBooking.student.email !== userData.email) {
+      if (studentId !== userData.id) {
+        setDebugInfo(prev => `${prev}\nID comparison failed: ${studentId} !== ${userData.id}`);
         throw new Error('You can only reschedule your own bookings');
       }
 
-      await api.post(`/bookings/${selectedBooking._id}/reschedule`, {
-        startTime: newStartTime,
-        endTime: newEndTime,
-      });
+      const rescheduleData = {
+        startTime: selectedTimeSlot.startTime,
+        endTime: selectedTimeSlot.endTime,
+      };
+
+      await api.post(`/bookings/${selectedBooking._id}/reschedule`, rescheduleData);
 
       setDebugInfo(prev => `${prev}\nBooking rescheduled successfully`);
       setIsRescheduleModalOpen(false);
+      setSelectedTimeSlot(null);
+      setSelectedBooking(null);
       await fetchBookings();
     } catch (err: unknown) {
       const error = err as ApiError;
@@ -147,10 +205,10 @@ export default function BookingsPage() {
     }
   };
 
-  const openRescheduleModal = (booking: Booking) => {
+  const openRescheduleModal = async (booking: Booking) => {
     setSelectedBooking(booking);
-    setNewStartTime(booking.startTime);
-    setNewEndTime(booking.endTime);
+    setSelectedTimeSlot(null);
+    await fetchAvailableTimeSlots(booking.mentor._id);
     setIsRescheduleModalOpen(true);
   };
 
@@ -171,9 +229,16 @@ export default function BookingsPage() {
         <div className="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-blue-700">📋 My Bookings</h1>
-            {userRole === 'mentor' && (
+            {userRole === 'mentor' ? (
               <Link
                 href="/mentor/dashboard"
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+              >
+                ← Back to Dashboard
+              </Link>
+            ) : (
+              <Link
+                href="/student/dashboard"
                 className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
               >
                 ← Back to Dashboard
@@ -270,25 +335,28 @@ export default function BookingsPage() {
               </Dialog.Title>
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">New Start Time</label>
-                  <input
-                    type="datetime-local"
-                    value={newStartTime.slice(0, 16)}
-                    onChange={(e) => setNewStartTime(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">New End Time</label>
-                  <input
-                    type="datetime-local"
-                    value={newEndTime.slice(0, 16)}
-                    onChange={(e) => setNewEndTime(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
+                <h3 className="font-medium text-gray-700">Available Time Slots</h3>
+                {availableTimeSlots.length === 0 ? (
+                  <p className="text-gray-500">No available time slots found</p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2">
+                    {availableTimeSlots.map(slot => (
+                      <div
+                        key={slot._id}
+                        className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                          selectedTimeSlot?._id === slot._id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-blue-300'
+                        }`}
+                        onClick={() => setSelectedTimeSlot(slot)}
+                      >
+                        <p className="font-medium">
+                          {formatDateTime(slot.startTime)} - {formatDateTime(slot.endTime)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="mt-6 flex justify-end space-x-3">
@@ -300,7 +368,12 @@ export default function BookingsPage() {
                 </button>
                 <button
                   onClick={handleReschedule}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  disabled={!selectedTimeSlot}
+                  className={`px-4 py-2 text-sm font-medium text-white rounded-md ${
+                    selectedTimeSlot
+                      ? 'bg-blue-600 hover:bg-blue-700'
+                      : 'bg-gray-400 cursor-not-allowed'
+                  }`}
                 >
                   Reschedule
                 </button>

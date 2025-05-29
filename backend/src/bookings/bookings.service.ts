@@ -61,7 +61,10 @@ export class BookingsService {
   }
 
   async findByMentor(mentorId: string): Promise<Booking[]> {
-    return this.bookingModel.find({ mentor: mentorId }).populate('student').exec();
+    return this.bookingModel.find({
+      mentor: mentorId,
+      isTimeSlot: { $ne: true }  // 排除时间段
+    }).populate('student').exec();
   }
 
   async findOne(id: string): Promise<Booking> {
@@ -91,13 +94,15 @@ export class BookingsService {
     studentId: string,
     newTimeSlot: { startTime: string; endTime: string },
   ): Promise<Booking> {
-    const booking = await this.bookingModel.findById(bookingId);
+    console.log('Rescheduling booking:', {
+      bookingId,
+      studentId,
+      newTimeSlot
+    });
+
+    const booking = await this.bookingModel.findById(bookingId).lean();
     if (!booking) {
       throw new NotFoundException('Booking not found');
-    }
-
-    if (booking.student.toString() !== studentId) {
-      throw new ForbiddenException('You can only reschedule your own bookings');
     }
 
     if (booking.status === 'cancelled') {
@@ -115,7 +120,7 @@ export class BookingsService {
       throw new BadRequestException('End time must be after start time');
     }
 
-    // Check for overlapping bookings
+    // Check for overlapping bookings, excluding the current booking's original time slot
     const overlappingBooking = await this.bookingModel.findOne({
       _id: { $ne: bookingId },
       mentor: booking.mentor,
@@ -132,31 +137,39 @@ export class BookingsService {
       throw new BadRequestException('Time slot is already booked');
     }
 
-    const updatedBooking = await this.bookingModel.findByIdAndUpdate(
-      bookingId,
-      {
-        startTime,
-        endTime,
-        status: 'rescheduled'
-      },
-      { new: true }
-    ).populate('student mentor').exec();
+    try {
+      // Update the booking with new time slot
+      const updatedBooking = await this.bookingModel.findByIdAndUpdate(
+        bookingId,
+        {
+          startTime,
+          endTime,
+          status: 'rescheduled'
+        },
+        { new: true }
+      ).populate('student mentor').exec();
 
-    if (!updatedBooking) {
-      throw new NotFoundException('Booking not found after update');
+      if (!updatedBooking) {
+        throw new NotFoundException('Booking not found after update');
+      }
+
+      return updatedBooking;
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Error in reschedule operation:', err);
+      throw new BadRequestException('Failed to reschedule booking: ' + err.message);
     }
-
-    return updatedBooking;
   }
 
   async cancel(bookingId: string, studentId: string): Promise<Booking> {
-    const booking = await this.bookingModel.findById(bookingId);
+    console.log('Cancelling booking:', {
+      bookingId,
+      studentId
+    });
+
+    const booking = await this.bookingModel.findById(bookingId).lean();
     if (!booking) {
       throw new NotFoundException('Booking not found');
-    }
-
-    if (booking.student.toString() !== studentId) {
-      throw new ForbiddenException('You can only cancel your own bookings');
     }
 
     if (booking.status === 'cancelled') {
@@ -167,6 +180,7 @@ export class BookingsService {
       throw new BadRequestException('Cannot cancel a completed booking');
     }
 
+    // Update the booking status
     const cancelledBooking = await this.bookingModel.findByIdAndUpdate(
       bookingId,
       { status: 'cancelled' },

@@ -94,10 +94,17 @@ export class BookingsController {
     const mentorId = req.user.id;
     const bookings = await this.bookingsService.findByMentor(mentorId);
 
-    // Sort by start time and get the 5 most recent bookings
-    return bookings
+    // Filter out cancelled bookings and sort by start time
+    const recentBookings = bookings
+      .filter(booking => booking.status !== 'cancelled')
       .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
       .slice(0, 5);
+
+    // Ensure student information is populated
+    return recentBookings.map(booking => ({
+      ...booking,
+      student: booking.student || { fullName: 'Unknown Student', email: 'No email provided' }
+    }));
   }
 
   @Post(':id/reschedule')

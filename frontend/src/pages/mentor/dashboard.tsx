@@ -191,8 +191,8 @@ export default function MentorDashboard() {
                   <div key={booking._id} className="border rounded-lg p-4 hover:bg-gray-50">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-semibold text-lg">{booking.student.fullName}</h3>
-                        <p className="text-sm text-gray-600">{booking.student.email}</p>
+                        <h3 className="font-semibold text-lg">{booking.student?.fullName || 'Unknown Student'}</h3>
+                        <p className="text-sm text-gray-600">{booking.student?.email || 'No email provided'}</p>
                         <p className="mt-2">
                           <span className="font-medium">Time:</span>{' '}
                           {formatDateTime(booking.startTime)} - {formatDateTime(booking.endTime)}
@@ -204,12 +204,12 @@ export default function MentorDashboard() {
                         )}
                       </div>
                       <span className={`px-3 py-1 rounded-full text-sm ${
-                        booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                        booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                        booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                        (booking.status || 'pending') === 'confirmed' ? 'bg-green-100 text-green-800' :
+                        (booking.status || 'pending') === 'cancelled' ? 'bg-red-100 text-red-800' :
+                        (booking.status || 'pending') === 'completed' ? 'bg-blue-100 text-blue-800' :
                         'bg-yellow-100 text-yellow-800'
                       }`}>
-                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                        {(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}
                       </span>
                     </div>
                   </div>
