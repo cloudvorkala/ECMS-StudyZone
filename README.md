@@ -1,3 +1,31 @@
+# Environment Setup
+
+## Backend Environment Variables
+Create a `.env` file in the `backend` directory with the following variables:
+```env
+DATABASE_URI= your own one
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_API_KEY=
+TWILIO_API_SECRET=
+TWILIO_TWIML_APP_SID=
+PORT=3000
+ALLOWED_ORIGINS=https://localhost:3000,https://localhost:3001
+
+
+
+
+
+
+## Frontend Environment Variables
+Create a `.env.local` file in the `frontend` directory with the following variables:
+```env
+
+NEXTAUTH_SECRET=your-development-secret
+NEXTAUTH_URL=https://localhost:3001
+NEXT_PUBLIC_API_URL=https://localhost:3000
+
+
 # After installing Certificate, backend - npm run start:dev, frontend - npm run dev, all will be running with https
 
 
