@@ -91,10 +91,6 @@ export default function MentorDashboard() {
           <Link href="/notifications" className="block p-4 bg-purple-100 rounded-lg hover:bg-purple-200">
             🔔 Notifications
           </Link>
-          {/* New Booking Requests Button */}
-          <Link href="/mentor/booking-requests" className="block p-4 bg-orange-100 rounded-lg hover:bg-orange-200">
-            📩 Booking Requests
-          </Link>
           {/* Profile Button */}
           <Link href="/mentor/profile" className="block p-4 bg-gray-300 rounded-lg hover:bg-gray-400">
             🙍‍♂️ Profile
