@@ -5,6 +5,7 @@ import { User } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { UpdateStudentProfileDto } from './dto/update-student-profile.dto';
+import { UserRole } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
@@ -38,6 +39,10 @@ export class UsersService {
 
   async findMentors(): Promise<User[]> {
     return this.userModel.find({ role: 'mentor' }).exec();
+  }
+
+  async findByRole(role: UserRole) {
+    return this.userModel.find({ role }).select('-password').exec();
   }
 
   async updateMentorProfile(id: string, updateData: Partial<User>): Promise<User> {

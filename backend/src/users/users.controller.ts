@@ -77,13 +77,11 @@ export class UsersController {
     return this.usersService.findMentors();
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string): Promise<User> {
-    const user = await this.usersService.findById(id);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return user;
+  @Get('students')
+  @Roles('mentor')
+  async findAllStudents() {
+    this.logger.debug('Getting all students');
+    return this.usersService.findByRole(UserRole.STUDENT);
   }
 
   @Put('mentor/profile')
@@ -118,5 +116,14 @@ export class UsersController {
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string): Promise<User> {
+    const user = await this.usersService.findById(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
   }
 }

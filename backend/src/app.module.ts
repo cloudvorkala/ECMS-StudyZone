@@ -13,6 +13,7 @@ import { RoomsModule } from './rooms/rooms.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { VoiceModule } from './voice/voice.module';
+import { StudyGroupsModule } from './study-groups/study-groups.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { VoiceModule } from './voice/voice.module';
     SessionsModule,
     CalendarModule,
     VoiceModule,
+    StudyGroupsModule,
   ],
 })
 export class AppModule {}

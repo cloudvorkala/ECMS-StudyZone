@@ -1,3 +1,8 @@
+# After installing Certificate, backend - npm run start:dev, frontend - npm run dev, all will be running with https
+
+
+
+
 # SSL Certificate Generation and Installation
 
 This document provides instructions for generating and installing SSL certificates for local development.

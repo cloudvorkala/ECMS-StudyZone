@@ -21,6 +21,14 @@ interface ApiErrorResponse {
   statusCode?: number;
 }
 
+interface AxiosErrorResponse {
+  data?: ApiErrorResponse;
+  status?: number;
+  config?: {
+    headers?: Record<string, string>;
+  };
+}
+
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -64,24 +72,19 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
         // Validate token
         setDebugInfo(prev => prev + '\nStarting token validation...');
         try {
-          // Set request headers
-          const config = {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          };
-          setDebugInfo(prev => prev + '\nSending validation request, headers: ' + JSON.stringify(config.headers));
-
-          const response = await api.get<{ user: UserData }>('/auth/validate', config);
+          const response = await api.get<{ user: UserData }>('/auth/validate');
           setDebugInfo(prev => prev + '\nToken validation response: ' + JSON.stringify(response.data));
           setDebugInfo(prev => prev + '\nValidated user role: ' + response.data.user.role);
+          setDebugInfo(prev => prev + '\nToken: ' + token);
+          setDebugInfo(prev => prev + '\nAuthorization header: ' + `Bearer ${token}`);
           setIsAuthorized(true);
         } catch (error) {
           setDebugInfo(prev => prev + '\nToken validation failed: ' + JSON.stringify(error));
           if (error && typeof error === 'object' && 'response' in error) {
-            const axiosError = error as { response?: { data?: ApiErrorResponse; status?: number } };
+            const axiosError = error as { response?: AxiosErrorResponse };
             setDebugInfo(prev => prev + '\nError status code: ' + axiosError.response?.status);
             setDebugInfo(prev => prev + '\nError response: ' + JSON.stringify(axiosError.response?.data));
+            setDebugInfo(prev => prev + '\nRequest headers: ' + JSON.stringify(axiosError.response?.config?.headers));
           }
           throw error; // Re-throw error for outer catch block
         }

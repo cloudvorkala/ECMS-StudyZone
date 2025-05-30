@@ -64,8 +64,12 @@ async function bootstrap() {
     );
 
     console.log('Configuring CORS...');
+    const allowedOrigins = process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',')
+      : ['https://localhost:3000', 'https://localhost:3001'];
+
     app.enableCors({
-      origin: ['https://localhost:3000', 'https://localhost:3001'],
+      origin: allowedOrigins,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],

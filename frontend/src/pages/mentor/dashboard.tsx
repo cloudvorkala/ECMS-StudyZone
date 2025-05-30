@@ -127,19 +127,19 @@ export default function MentorDashboard() {
               </div>
             ) : (
               <>
-                <div className="bg-white p-6 rounded-xl shadow-md">
+                <div key="total-bookings" className="bg-white p-6 rounded-xl shadow-md">
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Bookings</h3>
                   <p className="text-3xl font-bold text-blue-600">{stats.totalBookings}</p>
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-md">
+                <div key="pending-bookings" className="bg-white p-6 rounded-xl shadow-md">
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Pending Bookings</h3>
                   <p className="text-3xl font-bold text-yellow-600">{stats.pendingBookings}</p>
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-md">
+                <div key="completed-sessions" className="bg-white p-6 rounded-xl shadow-md">
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Completed Sessions</h3>
                   <p className="text-3xl font-bold text-green-600">{stats.completedSessions}</p>
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-md">
+                <div key="average-rating" className="bg-white p-6 rounded-xl shadow-md">
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Average Rating</h3>
                   <p className="text-3xl font-bold text-purple-600">{stats.averageRating.toFixed(1)} ⭐</p>
                 </div>
@@ -151,19 +151,19 @@ export default function MentorDashboard() {
           <div className="bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Link href="/calendar" className="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+              <Link key="set-hours" href="/calendar" className="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                 <h3 className="font-medium text-blue-700">📅 Set Available Hours</h3>
                 <p className="text-sm text-gray-600">Update your weekly availability</p>
               </Link>
-              <Link href="/mentor/booking-requests" className="p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
+              <Link key="review-requests" href="/mentor/booking-requests" className="p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
                 <h3 className="font-medium text-yellow-700">📝 Review Requests</h3>
                 <p className="text-sm text-gray-600">Check new booking requests</p>
               </Link>
-              <Link href="/mentor/groups" className="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+              <Link key="manage-groups" href="/mentor/groups" className="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
                 <h3 className="font-medium text-green-700">👥 Manage Groups</h3>
                 <p className="text-sm text-gray-600">Create or join study groups</p>
               </Link>
-              <Link href="/mentor/profile" className="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+              <Link key="update-profile" href="/mentor/profile" className="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
                 <h3 className="font-medium text-purple-700">👤 Update Profile</h3>
                 <p className="text-sm text-gray-600">Edit your expertise and information</p>
               </Link>
