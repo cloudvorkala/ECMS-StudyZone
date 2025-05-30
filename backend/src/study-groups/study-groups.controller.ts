@@ -30,6 +30,13 @@ export class StudyGroupsController {
     }
   }
 
+  @Get('my-groups')
+  @UseGuards(JwtAuthGuard)
+  async getMyGroups(@Request() req) {
+    this.logger.debug(`Getting my groups for user: ${req.user.id}`);
+    return this.studyGroupsService.findByUserId(req.user.id);
+  }
+
   @Get(':id')
   @Roles('mentor', 'student')
   async findOne(@Param('id') id: string) {

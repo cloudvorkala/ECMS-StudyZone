@@ -374,4 +374,17 @@ export class StudyGroupsService {
       throw new BadRequestException('Failed to delete the study group');
     }
   }
+
+  async findByUserId(userId: string): Promise<StudyGroup[]> {
+    return this.studyGroupModel
+      .find({
+        $or: [
+          { students: userId },
+          { mentor: userId }
+        ]
+      })
+      .populate('mentor', 'fullName')
+      .populate('students', 'fullName email studentId')
+      .exec();
+  }
 }
