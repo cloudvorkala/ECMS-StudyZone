@@ -14,6 +14,7 @@ import { SessionsModule } from './sessions/sessions.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { VoiceModule } from './voice/voice.module';
 import { StudyGroupsModule } from './study-groups/study-groups.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { StudyGroupsModule } from './study-groups/study-groups.module';
     CalendarModule,
     VoiceModule,
     StudyGroupsModule,
+    ChatModule,
   ],
 })
 export class AppModule {}

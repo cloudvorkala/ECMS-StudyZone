@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import api from '@/services/api';
+import { useRouter } from 'next/navigation';
+import ChatIcon from '@mui/icons-material/Chat';
 
 interface Student {
   _id: string;
@@ -27,6 +29,7 @@ export default function MentorGroupsPage() {
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [newStudentId, setNewStudentId] = useState('');
   const [availableStudents, setAvailableStudents] = useState<Student[]>([]);
+  const router = useRouter();
 
   // Fetch study groups
   useEffect(() => {
@@ -193,6 +196,10 @@ export default function MentorGroupsPage() {
     }
   };
 
+  const handleChatClick = (groupId: string) => {
+    router.push(`/group-chat/${groupId}`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 p-6 flex items-center justify-center">
@@ -296,12 +303,21 @@ export default function MentorGroupsPage() {
                       <p className="text-sm text-gray-600 mt-1">{group.description}</p>
                     )}
                   </div>
-                  <button
-                    onClick={() => handleDeleteGroup(group._id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    Delete Group
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleChatClick(group._id)}
+                      className="flex items-center px-3 py-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+                    >
+                      <ChatIcon className="w-5 h-5 mr-1" />
+                      Chat
+                    </button>
+                    <button
+                      onClick={() => handleDeleteGroup(group._id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      Delete Group
+                    </button>
+                  </div>
                 </div>
 
                 {group.students.length === 0 ? (

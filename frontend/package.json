@@ -9,7 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@headlessui/react": "^2.2.4",
+    "@mui/icons-material": "^7.1.0",
+    "@mui/material": "^7.1.0",
     "@twilio/voice-sdk": "^2.13.0",
     "@types/axios": "^0.9.36",
     "axios": "^1.9.0",
@@ -20,7 +24,9 @@
     "react-hook-form": "^7.55.0",
     "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
-    "sass": "^1.86.3"
+    "react-router-dom": "^7.6.1",
+    "sass": "^1.86.3",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
