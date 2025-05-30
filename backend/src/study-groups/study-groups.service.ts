@@ -14,28 +14,72 @@ export class StudyGroupsService {
   ) {}
 
   async create(mentorId: string, createStudyGroupDto: CreateStudyGroupDto): Promise<StudyGroup> {
-    // Verify all student IDs exist and are students
-    const students = await Promise.all(
-      createStudyGroupDto.studentIds.map(async (studentId) => {
-        const student = await this.usersService.findById(studentId);
-        if (!student) {
-          throw new NotFoundException(`User with ID ${studentId} not found`);
-        }
-        if (student.role !== UserRole.STUDENT) {
-          throw new BadRequestException(`User ${studentId} is not a student`);
-        }
-        return studentId;
-      })
-    );
+    try {
+      console.log('Creating study group:', {
+        mentorId,
+        createStudyGroupDto
+      });
 
-    // Use create instead of new for compatibility with mocks and Mongoose
-    const studyGroup = await this.studyGroupModel.create({
-      ...createStudyGroupDto,
-      mentor: mentorId,
-      students,
-      pendingStudents: [],
-    });
-    return studyGroup;
+      // Verify all student IDs exist and are students
+      const students = await Promise.all(
+        createStudyGroupDto.studentIds.map(async (studentId) => {
+          const student = await this.usersService.findById(studentId);
+          if (!student) {
+            console.error('Student not found:', studentId);
+            throw new NotFoundException(`User with ID ${studentId} not found`);
+          }
+          if (student.role !== UserRole.STUDENT) {
+            console.error('User is not a student:', {
+              userId: studentId,
+              role: student.role
+            });
+            throw new BadRequestException(`User ${studentId} is not a student`);
+          }
+          return studentId;
+        })
+      );
+
+      // Use create instead of new for compatibility with mocks and Mongoose
+      const studyGroup = await this.studyGroupModel.create({
+        ...createStudyGroupDto,
+        mentor: mentorId,
+        students,
+        pendingStudents: [],
+      });
+
+      console.log('Study group created:', {
+        id: studyGroup._id,
+        name: studyGroup.name,
+        mentor: studyGroup.mentor,
+        students: studyGroup.students
+      });
+
+      // Populate the students field before returning
+      const populatedGroup = await this.studyGroupModel
+        .findById(studyGroup._id)
+        .populate({
+          path: 'students',
+          select: 'fullName email studentId'
+        })
+        .populate({
+          path: 'mentor',
+          select: 'fullName email'
+        })
+        .exec();
+
+      if (!populatedGroup) {
+        console.error('Study group not found after creation:', studyGroup._id);
+        throw new NotFoundException(`Study group with ID ${studyGroup._id} not found after creation`);
+      }
+
+      return populatedGroup;
+    } catch (error) {
+      console.error('Error in create:', error);
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to create study group');
+    }
   }
 
   async findAll(): Promise<StudyGroup[]> {

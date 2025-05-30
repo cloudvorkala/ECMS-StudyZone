@@ -91,10 +91,23 @@ export default function MentorGroupsPage() {
       return;
     }
 
+    // Verify that the selected group still exists
+    const selectedGroup = groups.find(g => g._id === selectedGroupId);
+    if (!selectedGroup) {
+      console.error('Selected group not found:', {
+        selectedGroupId,
+        availableGroups: groups.map(g => ({ id: g._id, name: g.name }))
+      });
+      toast.error('Selected group no longer exists');
+      setSelectedGroupId('');
+      return;
+    }
+
     try {
       console.log('Adding student:', {
         groupId: selectedGroupId,
-        studentId: newStudentId
+        studentId: newStudentId,
+        selectedGroup
       });
 
       const response = await api.post<StudyGroup>(`/study-groups/${selectedGroupId}/students`, {
@@ -103,9 +116,15 @@ export default function MentorGroupsPage() {
 
       console.log('Add student response:', response.data);
 
-      setGroups(groups.map(group =>
-        group._id === selectedGroupId ? response.data : group
-      ));
+      // Update the groups state with the new data
+      setGroups(prevGroups => {
+        const updatedGroups = prevGroups.map(group =>
+          group._id === selectedGroupId ? response.data : group
+        );
+        console.log('Updated groups:', updatedGroups);
+        return updatedGroups;
+      });
+
       setNewStudentId('');
       toast.success('Student added successfully');
     } catch (error) {
@@ -119,6 +138,12 @@ export default function MentorGroupsPage() {
           data: response.data
         });
         toast.error(errorMessage);
+
+        // If the group was not found, clear the selection and refresh groups
+        if (response.status === 404) {
+          setSelectedGroupId('');
+          fetchGroups(); // Refresh the groups list
+        }
       } else {
         toast.error('Failed to add student');
       }
@@ -150,10 +175,21 @@ export default function MentorGroupsPage() {
     try {
       await api.delete(`/study-groups/${groupId}`);
       setGroups(groups.filter(g => g._id !== groupId));
+
+      // If the deleted group was selected, clear the selection
+      if (selectedGroupId === groupId) {
+        setSelectedGroupId('');
+      }
+
       toast.success('Group deleted successfully');
     } catch (error) {
-      toast.error('Failed to delete group');
       console.error('Error deleting group:', error);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const response = error.response as { data?: { message?: string } };
+        toast.error(response.data?.message || 'Failed to delete group');
+      } else {
+        toast.error('Failed to delete group');
+      }
     }
   };
 
