@@ -1,6 +1,6 @@
 // This page is for the student to view the screen share
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { io, Socket } from 'socket.io-client';
 import { Card } from '@/components/ui/card';
@@ -24,6 +24,11 @@ interface User {
   email: string;
   name: string;
   role: string;
+}
+
+interface ActiveSessionsResponse {
+  success: boolean;
+  sessions: ScreenShareSession[];
 }
 
 interface ViewerJoinedData {
@@ -51,10 +56,55 @@ export default function StudentScreenShareViewerPage() {
   const [user, setUser] = useState<User | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [peerConnection, setPeerConnection] = useState<RTCPeerConnection | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [connectionState, setConnectionState] = useState<string>('Disconnected');
 
-  // 使用refs避免重新渲染问题
+  // Effect to set video stream when both video element and stream are available
+  useEffect(() => {
+    console.log('Video effect triggered:', {
+      hasVideoRef: !!videoRef.current,
+      hasRemoteStream: !!remoteStream,
+      streamId: remoteStream?.id
+    });
+
+    if (videoRef.current && remoteStream) {
+      console.log('Setting stream to video element via useEffect');
+      videoRef.current.srcObject = remoteStream;
+
+      // Force video to play
+      videoRef.current.play().catch(console.error);
+    } else if (remoteStream && !videoRef.current) {
+      // Video ref not ready yet, set up retry mechanism
+      console.log('Video ref not ready, setting up retry mechanism');
+      let attempts = 0;
+      const retryInterval = setInterval(() => {
+        attempts++;
+        console.log(`useEffect retry attempt ${attempts}`);
+
+        if (videoRef.current && remoteStream) {
+          console.log('Successfully set stream via useEffect retry');
+          videoRef.current.srcObject = remoteStream;
+          videoRef.current.play().catch(console.error);
+          clearInterval(retryInterval);
+        } else if (attempts >= 20) {
+          console.error('Failed to set video stream via useEffect after 20 attempts');
+          clearInterval(retryInterval);
+        }
+      }, 100); // Try every 100ms
+    }
+  }, [remoteStream]);
+
+  // Additional effect to ensure video element is ready
+  useEffect(() => {
+    if (videoRef.current && remoteStream) {
+      console.log('Video ref ready, setting stream');
+      videoRef.current.srcObject = remoteStream;
+      videoRef.current.play().catch(console.error);
+    }
+  }, [remoteStream, activeSession]); // Also depend on activeSession
+
+  // Use refs to avoid re-render issues
   const socketRef = useRef<Socket | null>(null);
   const userRef = useRef<User | null>(null);
   const activeSessionRef = useRef<ScreenShareSession | null>(null);
@@ -64,6 +114,67 @@ export default function StudentScreenShareViewerPage() {
   userRef.current = user;
   activeSessionRef.current = activeSession;
   peerConnectionRef.current = peerConnection;
+
+  // Function to automatically join session as viewer
+  const joinAsViewer = useCallback(async (sessionId: string) => {
+    if (!socketRef.current || !userRef.current) return;
+
+    console.log('Joining as viewer for session:', sessionId);
+
+    // Create peer connection
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    });
+
+    setPeerConnection(pc);
+
+    // Handle incoming streams
+    pc.ontrack = (event) => {
+      console.log('Received remote stream:', event.streams[0]);
+      const stream = event.streams[0];
+
+      // Store stream in state
+      setRemoteStream(stream);
+      setConnectionState('Receiving stream');
+      toast.success('Connected to screen share');
+      console.log('Stream stored in state');
+    };
+
+    // Handle ICE candidates
+    pc.onicecandidate = (event) => {
+      if (event.candidate && socketRef.current && activeSessionRef.current) {
+        console.log('Sending ICE candidate to mentor');
+        socketRef.current.emit('ice-candidate', {
+          sessionId: activeSessionRef.current.id,
+          candidate: event.candidate,
+          targetId: activeSessionRef.current.sharerId
+        });
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log('ICE connection state:', pc.iceConnectionState);
+      setConnectionState(`ICE: ${pc.iceConnectionState}`);
+    };
+
+    pc.onconnectionstatechange = () => {
+      console.log('Connection state:', pc.connectionState);
+      setConnectionState(`Connection: ${pc.connectionState}`);
+
+      if (pc.connectionState === 'connected') {
+        toast.success('Successfully connected to stream');
+      } else if (pc.connectionState === 'failed') {
+        toast.error('Connection failed');
+      }
+    };
+
+    // Request to join as viewer
+    socketRef.current.emit('join-as-viewer', {
+      sessionId,
+      userId: userRef.current.id,
+      groupId: groupId as string
+    });
+  }, [groupId]); // 只依赖groupId，使用refs访问其他值
 
   useEffect(() => {
     if (!groupId) return;
@@ -124,6 +235,25 @@ export default function StudentScreenShareViewerPage() {
     newSocket.on('joined-room', (data) => {
       console.log('Successfully joined room:', data);
       toast.success('Connected to room');
+
+      // Check for active sessions
+      newSocket.emit('get-active-sessions', { groupId: groupId as string });
+    });
+
+    // Handle get active sessions response
+    newSocket.on('get-active-sessions', (response: ActiveSessionsResponse) => {
+      console.log('Active sessions response:', response);
+      if (response.success && response.sessions && response.sessions.length > 0) {
+        const activeSession = response.sessions[0]; // Get first active session
+        console.log('Found active session, auto-joining:', activeSession);
+        setActiveSession(activeSession);
+        toast.info('Joining ongoing screen share...');
+
+        // Immediately join this existing session
+        joinAsViewer(activeSession.id);
+      } else {
+        console.log('No active sessions found');
+      }
     });
 
     newSocket.on('connect_error', (error) => {
@@ -153,68 +283,11 @@ export default function StudentScreenShareViewerPage() {
       newSocket.removeAllListeners();
       newSocket.disconnect();
     };
-  }, [groupId, router]);
+  }, [groupId, router, joinAsViewer]);
 
-  // 单独处理WebRTC事件
+  // Handle WebRTC events separately
   useEffect(() => {
     if (!socket || !user) return;
-
-    // 自动加入会话的函数
-    const joinAsViewer = async (sessionId: string) => {
-      console.log('Joining as viewer for session:', sessionId);
-
-      // 创建peer connection
-      const pc = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-      });
-
-      setPeerConnection(pc);
-
-      // 处理接收到的流
-      pc.ontrack = (event) => {
-        console.log('Received remote stream:', event.streams[0]);
-        if (videoRef.current && event.streams[0]) {
-          videoRef.current.srcObject = event.streams[0];
-          setConnectionState('Receiving stream');
-          toast.success('Connected to screen share');
-        }
-      };
-
-      // 处理ICE candidates
-      pc.onicecandidate = (event) => {
-        if (event.candidate && socketRef.current && activeSessionRef.current) {
-          console.log('Sending ICE candidate to mentor');
-          socketRef.current.emit('ice-candidate', {
-            sessionId: activeSessionRef.current.id,
-            candidate: event.candidate,
-            targetId: activeSessionRef.current.sharerId
-          });
-        }
-      };
-
-      pc.oniceconnectionstatechange = () => {
-        console.log('ICE connection state:', pc.iceConnectionState);
-        setConnectionState(`ICE: ${pc.iceConnectionState}`);
-      };
-
-      pc.onconnectionstatechange = () => {
-        console.log('Connection state:', pc.connectionState);
-        setConnectionState(`Connection: ${pc.connectionState}`);
-
-        if (pc.connectionState === 'connected') {
-          toast.success('Successfully connected to stream');
-        } else if (pc.connectionState === 'failed') {
-          toast.error('Connection failed');
-        }
-      };
-
-      // 请求加入作为viewer
-      socket.emit('join-as-viewer', {
-        sessionId,
-        userId: user.id,
-        groupId: groupId as string
-      });
-    };
 
     // Screen share events
     const handleScreenShareStarted = async (session: ScreenShareSession) => {
@@ -222,7 +295,7 @@ export default function StudentScreenShareViewerPage() {
       setActiveSession(session);
       toast.info('Mentor started screen sharing');
 
-      // 自动加入
+      // Auto join
       if (session.status === 'active') {
         await joinAsViewer(session.id);
       }
@@ -240,6 +313,21 @@ export default function StudentScreenShareViewerPage() {
         videoRef.current.srcObject = null;
       }
       toast.info('Screen sharing has ended');
+    };
+
+    const handleGetActiveSessionsResponse = (response: ActiveSessionsResponse) => {
+      console.log('Active sessions response in WebRTC handler:', response);
+      if (response.success && response.sessions && response.sessions.length > 0) {
+        const activeSession = response.sessions[0]; // Get first active session
+        console.log('Found active session in WebRTC handler, auto-joining:', activeSession);
+        setActiveSession(activeSession);
+        toast.info('Joining ongoing screen share...');
+
+        // Immediately join this existing session
+        joinAsViewer(activeSession.id);
+      } else {
+        console.log('No active sessions found in WebRTC handler');
+      }
     };
 
     const handleViewerJoined = (data: ViewerJoinedData) => {
@@ -290,12 +378,13 @@ export default function StudentScreenShareViewerPage() {
       }
     };
 
-    // 绑定事件
+    // Bind events
     socket.on('screen-share-started', handleScreenShareStarted);
     socket.on('screen-share-ended', handleScreenShareEnded);
     socket.on('viewer-joined', handleViewerJoined);
     socket.on('offer', handleOffer);
     socket.on('ice-candidate', handleIceCandidate);
+    socket.on('get-active-sessions', handleGetActiveSessionsResponse);
 
     return () => {
       socket.off('screen-share-started', handleScreenShareStarted);
@@ -303,8 +392,9 @@ export default function StudentScreenShareViewerPage() {
       socket.off('viewer-joined', handleViewerJoined);
       socket.off('offer', handleOffer);
       socket.off('ice-candidate', handleIceCandidate);
+      socket.off('get-active-sessions', handleGetActiveSessionsResponse);
     };
-  }, [socket, user, groupId]);
+  }, [socket, user, groupId, joinAsViewer]);
 
   const handleBack = () => {
     if (peerConnection) {
@@ -369,7 +459,7 @@ export default function StudentScreenShareViewerPage() {
                     className="w-full h-full"
                     style={{ maxHeight: '70vh' }}
                   />
-                  {!videoRef.current?.srcObject && (
+                  {!remoteStream && (
                     <div className="absolute inset-0 flex items-center justify-center text-white">
                       <div className="text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
