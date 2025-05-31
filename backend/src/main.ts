@@ -8,6 +8,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import * as fs from 'fs';
 import * as path from 'path';
 import { HttpsOptions } from '@nestjs/common/interfaces/external/https-options.interface';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   try {
@@ -32,6 +33,13 @@ async function bootstrap() {
     console.log('Creating NestJS application with HTTPS...');
     const app = await NestFactory.create(AppModule, {
       httpsOptions,
+      logger: ['error', 'warn', 'debug', 'log', 'verbose'],
+      cors: {
+        origin: ['https://localhost:3000', 'https://localhost:3001'],
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+      },
     });
 
     const configService = app.get(ConfigService);
@@ -55,32 +63,15 @@ async function bootstrap() {
     app.useGlobalGuards(jwtAuthGuard);
 
     app.setGlobalPrefix('api');
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        transform: true,
-        forbidNonWhitelisted: true,
-      }),
-    );
-
-    console.log('Configuring CORS...');
-    const allowedOrigins = process.env.ALLOWED_ORIGINS
-      ? process.env.ALLOWED_ORIGINS.split(',')
-      : ['https://localhost:3000', 'https://localhost:3001'];
-
-    app.enableCors({
-      origin: allowedOrigins,
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-      secure: true
-    });
+    app.useGlobalPipes(new ValidationPipe());
+    app.use(cookieParser());
 
     console.log('Setting up Swagger documentation...');
     const swaggerConfig = new DocumentBuilder()
       .setTitle('Mentor Match API')
       .setDescription('The Mentor Match API Documentation')
       .setVersion('1.0')
+      .addBearerAuth()
       .build();
     const document = SwaggerModule.createDocument(app, swaggerConfig);
     SwaggerModule.setup('api/docs', app, document);

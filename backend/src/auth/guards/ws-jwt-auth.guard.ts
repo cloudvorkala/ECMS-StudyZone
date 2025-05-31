@@ -10,7 +10,7 @@ export class WsJwtAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
       const client: Socket = context.switchToWs().getClient<Socket>();
-      // 尝试从 query 或 headers 中获取 token
+      // try to get token from query, headers, or auth
       const authToken = client.handshake.query.token ||
                        client.handshake.headers.token ||
                        client.handshake.auth.token;
@@ -20,7 +20,7 @@ export class WsJwtAuthGuard implements CanActivate {
       }
 
       const payload = await this.jwtService.verifyAsync(authToken, {
-        secret: process.env.JWT_SECRET,
+        secret: process.env.JWT_SECRET || 'super-secret',
       });
 
       // user info attached to socket object

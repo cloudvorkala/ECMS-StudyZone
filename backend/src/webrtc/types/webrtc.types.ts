@@ -1,17 +1,23 @@
+export interface MediaStreamConfig {
+  video: boolean;
+  audio: boolean;
+  screen: boolean;
+}
+
 export type MediaType = 'screen' | 'camera' | 'both';
 
 export interface WebRTCSignal {
-  type: 'offer' | 'answer' | 'candidate';
-  sdp?: RTCSessionDescriptionInit;
-  candidate?: RTCIceCandidateInit;
-  targetUserId: string;
-  senderId: string;
-  mediaType: MediaType;
+  type: 'offer' | 'answer' | 'ice-candidate';
+  sessionId: string;
+  from: string;
+  to: string;
+  data: any;
 }
 
 export interface ScreenShareSession {
   id: string;
   sharerId: string;
+  groupId: string;
   status: 'active' | 'ended';
   startTime: Date;
   endTime?: Date;
@@ -40,6 +46,8 @@ export interface WebRTCConnection {
   endTime?: Date;
   mediaType: MediaType;
   audioEnabled: boolean;
+  peerConnection?: RTCPeerConnection;
+  mediaStream?: MediaStream;
 }
 
 export interface AudioConfig {
@@ -48,13 +56,4 @@ export interface AudioConfig {
   echoCancellation: boolean;
   noiseSuppression: boolean;
   autoGainControl: boolean;
-}
-
-export interface MediaStreamConfig {
-  audio: boolean | AudioConfig;
-  video: boolean | {
-    width: number;
-    height: number;
-    frameRate: number;
-  };
 }

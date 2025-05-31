@@ -4,6 +4,9 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import api from '@/services/api';
 import { useRouter } from 'next/navigation';
 import ChatIcon from '@mui/icons-material/Chat';
+import { Share } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 interface Student {
   _id: string;
@@ -120,6 +123,16 @@ export default function StudentGroupsPage() {
                       ))}
                     </ul>
                   </div>
+
+                  <Link href={`/screen-share/view/${group._id}`}>
+                    <Button
+                      variant="outline"
+                      className="mt-2 transition-all duration-200 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 hover:scale-105"
+                    >
+                      <Share className="mr-2 h-4 w-4" />
+                      View Screen Share
+                    </Button>
+                  </Link>
                 </div>
               ))}
             </div>
