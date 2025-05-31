@@ -1,6 +1,6 @@
 // This page is for the student to view the screen share
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { io, Socket } from 'socket.io-client';
 import { Card } from '@/components/ui/card';
@@ -26,12 +26,21 @@ interface User {
   role: string;
 }
 
-interface WebRTCSignal {
-  type: 'offer' | 'answer' | 'candidate' | 'ice-candidate';
-  from: string;
-  to: string;
+interface ViewerJoinedData {
   sessionId: string;
-  data?: RTCSessionDescriptionInit | RTCIceCandidateInit;
+  userId: string;
+  success: boolean;
+}
+
+interface OfferData {
+  sessionId: string;
+  fromUserId: string;
+  offer: RTCSessionDescriptionInit;
+}
+
+interface IceCandidateData {
+  sessionId: string;
+  candidate: RTCIceCandidateInit;
 }
 
 export default function StudentScreenShareViewerPage() {
@@ -45,22 +54,24 @@ export default function StudentScreenShareViewerPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [connectionState, setConnectionState] = useState<string>('Disconnected');
 
-  const cleanupPeerConnection = useCallback(() => {
-    if (peerConnection) {
-      console.log('Closing peer connection');
-      peerConnection.close();
-      setPeerConnection(null);
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-  }, [peerConnection]);
+  // 使用refs避免重新渲染问题
+  const socketRef = useRef<Socket | null>(null);
+  const userRef = useRef<User | null>(null);
+  const activeSessionRef = useRef<ScreenShareSession | null>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+
+  socketRef.current = socket;
+  userRef.current = user;
+  activeSessionRef.current = activeSession;
+  peerConnectionRef.current = peerConnection;
 
   useEffect(() => {
+    if (!groupId) return;
+
     const storedUser = sessionStorage.getItem('user');
     const token = sessionStorage.getItem('token');
 
-    if (!token || !storedUser || !groupId) {
+    if (!token || !storedUser) {
       toast.error('Authentication required');
       router.push('/');
       return;
@@ -82,7 +93,7 @@ export default function StudentScreenShareViewerPage() {
         userId: userData.id,
         role: 'viewer'
       },
-      transports: ['polling'],
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
@@ -93,9 +104,6 @@ export default function StudentScreenShareViewerPage() {
       path: '/socket.io',
       autoConnect: true,
       forceNew: true,
-      extraHeaders: {
-        'Access-Control-Allow-Origin': '*'
-      }
     });
 
     // Connection events
@@ -116,17 +124,11 @@ export default function StudentScreenShareViewerPage() {
     newSocket.on('joined-room', (data) => {
       console.log('Successfully joined room:', data);
       toast.success('Connected to room');
-
-      // Check for active sessions
-      newSocket.emit('get-active-sessions', { groupId: groupId as string });
     });
 
     newSocket.on('connect_error', (error) => {
       console.error('Connection error:', error);
       setIsConnected(false);
-      if (error.message.includes('xhr poll error')) {
-        console.log('Falling back to polling...');
-      }
       toast.error(`Connection failed: ${error.message}`);
     });
 
@@ -134,11 +136,6 @@ export default function StudentScreenShareViewerPage() {
       console.log('Disconnected from server:', reason);
       setIsConnected(false);
       setConnectionState('Disconnected');
-      if (reason === 'io server disconnect') {
-        toast.error('Disconnected by server');
-      } else {
-        toast.warning('Connection lost, attempting to reconnect...');
-      }
     });
 
     newSocket.on('error', (error) => {
@@ -146,205 +143,186 @@ export default function StudentScreenShareViewerPage() {
       toast.error(error.message || 'Connection error occurred');
     });
 
+    setSocket(newSocket);
+
+    return () => {
+      console.log('Cleaning up viewer connection...');
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+      }
+      newSocket.removeAllListeners();
+      newSocket.disconnect();
+    };
+  }, [groupId, router]);
+
+  // 单独处理WebRTC事件
+  useEffect(() => {
+    if (!socket || !user) return;
+
+    // 自动加入会话的函数
+    const joinAsViewer = async (sessionId: string) => {
+      console.log('Joining as viewer for session:', sessionId);
+
+      // 创建peer connection
+      const pc = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+      });
+
+      setPeerConnection(pc);
+
+      // 处理接收到的流
+      pc.ontrack = (event) => {
+        console.log('Received remote stream:', event.streams[0]);
+        if (videoRef.current && event.streams[0]) {
+          videoRef.current.srcObject = event.streams[0];
+          setConnectionState('Receiving stream');
+          toast.success('Connected to screen share');
+        }
+      };
+
+      // 处理ICE candidates
+      pc.onicecandidate = (event) => {
+        if (event.candidate && socketRef.current && activeSessionRef.current) {
+          console.log('Sending ICE candidate to mentor');
+          socketRef.current.emit('ice-candidate', {
+            sessionId: activeSessionRef.current.id,
+            candidate: event.candidate,
+            targetId: activeSessionRef.current.sharerId
+          });
+        }
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        console.log('ICE connection state:', pc.iceConnectionState);
+        setConnectionState(`ICE: ${pc.iceConnectionState}`);
+      };
+
+      pc.onconnectionstatechange = () => {
+        console.log('Connection state:', pc.connectionState);
+        setConnectionState(`Connection: ${pc.connectionState}`);
+
+        if (pc.connectionState === 'connected') {
+          toast.success('Successfully connected to stream');
+        } else if (pc.connectionState === 'failed') {
+          toast.error('Connection failed');
+        }
+      };
+
+      // 请求加入作为viewer
+      socket.emit('join-as-viewer', {
+        sessionId,
+        userId: user.id,
+        groupId: groupId as string
+      });
+    };
+
     // Screen share events
-    newSocket.on('screen-share-started', (session: ScreenShareSession) => {
+    const handleScreenShareStarted = async (session: ScreenShareSession) => {
       console.log('Screen share started:', session);
       setActiveSession(session);
-      setConnectionState('Screen share started, requesting connection...');
       toast.info('Mentor started screen sharing');
 
-      // 主动请求 offer
-      if (newSocket && user) {
-        console.log('Requesting offer from mentor:', session.sharerId);
-        newSocket.emit('request-offer', {
-          sessionId: session.id,
-          from: user.id,
-          to: session.sharerId
-        });
+      // 自动加入
+      if (session.status === 'active') {
+        await joinAsViewer(session.id);
       }
-    });
+    };
 
-    newSocket.on('screen-share-ended', (session: ScreenShareSession) => {
+    const handleScreenShareEnded = (session: ScreenShareSession) => {
       console.log('Screen share ended:', session);
       setActiveSession(null);
       setConnectionState('Screen share ended');
-      cleanupPeerConnection();
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+        setPeerConnection(null);
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
       toast.info('Screen sharing has ended');
-    });
-
-    // WebRTC signaling
-    newSocket.on('webrtc-signal', async (signal: WebRTCSignal) => {
-      console.log('Received WebRTC signal:', signal);
-      await handleWebRTCSignal(signal);
-    });
-
-    // 添加 offer 请求响应处理
-    newSocket.on('offer-requested', (data) => {
-      console.log('Offer requested:', data);
-    });
-
-    // 添加重连处理
-    newSocket.on('reconnect_attempt', (attemptNumber) => {
-      console.log(`Reconnection attempt ${attemptNumber}`);
-    });
-
-    newSocket.on('reconnect', (attemptNumber) => {
-      console.log(`Reconnected after ${attemptNumber} attempts`);
-      setIsConnected(true);
-      toast.success('Reconnected to server');
-    });
-
-    newSocket.on('reconnect_error', (error) => {
-      console.error('Reconnection error:', error);
-    });
-
-    newSocket.on('reconnect_failed', () => {
-      console.error('Failed to reconnect');
-      toast.error('Failed to reconnect to server');
-    });
-
-    setSocket(newSocket);
-
-    // Cleanup
-    return () => {
-      console.log('Cleaning up viewer connection...');
-      cleanupPeerConnection();
-      newSocket.disconnect();
-    };
-  }, [router, groupId, cleanupPeerConnection]);
-
-  const createPeerConnection = () => {
-    console.log('Creating new peer connection...');
-
-    const pc = new RTCPeerConnection({
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-      ],
-    });
-
-    // Handle incoming tracks
-    pc.ontrack = (event) => {
-      console.log('Received track:', event.track.kind);
-      if (videoRef.current && event.streams[0]) {
-        videoRef.current.srcObject = event.streams[0];
-        setConnectionState('Receiving stream');
-        toast.success('Connected to screen share');
-      }
     };
 
-    // ICE candidate handling
-    pc.onicecandidate = (event) => {
-      if (event.candidate && socket && activeSession && user) {
-        console.log('Sending ICE candidate to mentor');
-        socket.emit('webrtc-signal', {
-          type: 'ice-candidate',
-          sessionId: activeSession.id,
-          from: user.id,
-          to: activeSession.sharerId,
-          data: event.candidate,
-        });
-      }
+    const handleViewerJoined = (data: ViewerJoinedData) => {
+      console.log('Viewer joined response:', data);
     };
 
-    pc.oniceconnectionstatechange = () => {
-      console.log('ICE connection state:', pc.iceConnectionState);
-      setConnectionState(`ICE: ${pc.iceConnectionState}`);
-    };
+    const handleOffer = async (data: OfferData) => {
+      console.log('Received offer from sharer');
 
-    pc.onconnectionstatechange = () => {
-      console.log('Connection state:', pc.connectionState);
-      setConnectionState(`Connection: ${pc.connectionState}`);
-
-      if (pc.connectionState === 'connected') {
-        toast.success('Successfully connected to stream');
-      } else if (pc.connectionState === 'failed') {
-        toast.error('Connection failed');
-        cleanupPeerConnection();
-      }
-    };
-
-    setPeerConnection(pc);
-    return pc;
-  };
-
-  const handleWebRTCSignal = async (signal: WebRTCSignal) => {
-    try {
-      console.log('Handling WebRTC signal:', signal);
-
-      // Check if signal is for us
-      if (signal.to !== 'all' && signal.to !== user?.id) {
-        console.log('Signal not for us, ignoring');
+      const pc = peerConnectionRef.current;
+      if (!pc) {
+        console.log('No peer connection available');
         return;
       }
 
-      if (signal.type === 'offer') {
-        console.log('Received offer from mentor:', signal.from);
+      try {
+        await pc.setRemoteDescription(data.offer);
 
-        // Create or get peer connection
-        let pc = peerConnection;
-        if (!pc) {
-          console.log('Creating new peer connection');
-          pc = createPeerConnection();
-        }
+        // Create and send answer
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
 
-        // Set remote description
-        if (signal.data) {
-          console.log('Setting remote description');
-          await pc.setRemoteDescription(new RTCSessionDescription(signal.data as RTCSessionDescriptionInit));
-          console.log('Remote description set successfully');
-
-          // Create and send answer
-          console.log('Creating answer');
-          const answer = await pc.createAnswer();
-          console.log('Setting local description');
-          await pc.setLocalDescription(answer);
-          console.log('Local description set successfully');
-
-          if (socket && activeSession && user) {
-            console.log('Sending answer to mentor:', signal.from);
-            socket.emit('webrtc-signal', {
-              type: 'answer',
-              sessionId: activeSession.id,
-              from: user.id,
-              to: signal.from,
-              data: answer,
-            });
-            console.log('Answer sent successfully');
-          } else {
-            console.error('Missing required data for sending answer:', { socket: !!socket, activeSession: !!activeSession, user: !!user });
-          }
-        } else {
-          console.error('No signal data in offer');
-        }
-
-      } else if (signal.type === 'ice-candidate' || signal.type === 'candidate') {
-        console.log('Received ICE candidate from mentor:', signal.from);
-
-        if (peerConnection && signal.data) {
-          console.log('Adding ICE candidate');
-          await peerConnection.addIceCandidate(new RTCIceCandidate(signal.data as RTCIceCandidateInit));
-          console.log('ICE candidate added successfully');
-        } else {
-          console.warn('No peer connection available for ICE candidate or missing data');
-        }
+        socket.emit('answer', {
+          sessionId: data.sessionId,
+          answer,
+          targetId: data.fromUserId
+        });
+        console.log('Sent answer to sharer');
+      } catch (error) {
+        console.error('Error handling offer:', error);
       }
-    } catch (error) {
-      console.error('Error handling WebRTC signal:', error);
-      toast.error('Failed to establish connection');
-      cleanupPeerConnection();
-    }
-  };
+    };
+
+    const handleIceCandidate = async (data: IceCandidateData) => {
+      console.log('Received ICE candidate');
+
+      const pc = peerConnectionRef.current;
+      if (!pc) {
+        console.log('No peer connection available');
+        return;
+      }
+
+      try {
+        await pc.addIceCandidate(data.candidate);
+        console.log('Added ICE candidate');
+      } catch (error) {
+        console.error('Error adding ICE candidate:', error);
+      }
+    };
+
+    // 绑定事件
+    socket.on('screen-share-started', handleScreenShareStarted);
+    socket.on('screen-share-ended', handleScreenShareEnded);
+    socket.on('viewer-joined', handleViewerJoined);
+    socket.on('offer', handleOffer);
+    socket.on('ice-candidate', handleIceCandidate);
+
+    return () => {
+      socket.off('screen-share-started', handleScreenShareStarted);
+      socket.off('screen-share-ended', handleScreenShareEnded);
+      socket.off('viewer-joined', handleViewerJoined);
+      socket.off('offer', handleOffer);
+      socket.off('ice-candidate', handleIceCandidate);
+    };
+  }, [socket, user, groupId]);
 
   const handleBack = () => {
-    cleanupPeerConnection();
+    if (peerConnection) {
+      peerConnection.close();
+    }
     router.back();
   };
 
   const handleRefresh = () => {
     if (socket && groupId) {
       console.log('Refreshing connection...');
-      cleanupPeerConnection();
+      if (peerConnection) {
+        peerConnection.close();
+        setPeerConnection(null);
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
       socket.emit('get-active-sessions', { groupId: groupId as string });
     }
   };
@@ -407,6 +385,7 @@ export default function StudentScreenShareViewerPage() {
                     <p><span className="font-medium">Session ID:</span> {activeSession.id}</p>
                     <p><span className="font-medium">Status:</span> <span className="text-green-600">Active</span></p>
                     <p><span className="font-medium">Media Type:</span> {activeSession.mediaType === 'both' ? 'Screen + Audio' : 'Screen Only'}</p>
+                    <p><span className="font-medium">Connection:</span> {connectionState}</p>
                   </div>
                 </div>
               </div>

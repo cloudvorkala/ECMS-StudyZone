@@ -24,7 +24,11 @@ interface ScreenShareSession {
   status: 'active' | 'ended';
   startTime: Date;
   endTime?: Date;
-  viewers: string[];
+  viewers: Array<{
+    userId: string;
+    socketId: string;
+    joinedAt: Date;
+  }>;
   mediaType: 'screen' | 'camera' | 'both';
   audioEnabled: boolean;
 }
@@ -54,8 +58,7 @@ interface ScreenShareSession {
 })
 export class WebRTCGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(WebRTCGateway.name);
-  private readonly activeSessions = new Map<string, ScreenShareSession>();
-  private readonly roomClients = new Map<string, Set<string>>();
+  private readonly screenShareSessions = new Map<string, ScreenShareSession>();
 
   @WebSocketServer()
   server!: Server;
@@ -73,8 +76,7 @@ export class WebRTCGateway implements OnGatewayInit, OnGatewayConnection, OnGate
 
   private cleanupAllConnections(server: Server) {
     this.logger.log('Cleaning up all connections...');
-    this.roomClients.clear();
-    this.activeSessions.clear();
+    this.screenShareSessions.clear();
     if (server.sockets) {
       const sockets = server.sockets.sockets;
       if (sockets) {
@@ -126,18 +128,13 @@ export class WebRTCGateway implements OnGatewayInit, OnGatewayConnection, OnGate
 
       if (groupId && userId) {
         // Check if user was sharing screen
-        for (const [sessionId, session] of this.activeSessions) {
+        for (const [sessionId, session] of this.screenShareSessions) {
           if (session.sharerId === userId) {
             this.logger.log(`Sharer disconnected, ending session: ${sessionId}`);
             this.handleEndScreenShare(client, { sessionId });
-          }
-        }
-
-        // Remove from room clients tracking
-        if (this.roomClients.has(groupId)) {
-          this.roomClients.get(groupId)?.delete(client.id);
-          if (this.roomClients.get(groupId)?.size === 0) {
-            this.roomClients.delete(groupId);
+          } else {
+            // Remove from viewers
+            session.viewers = session.viewers.filter(v => v.userId !== userId);
           }
         }
       }
@@ -157,22 +154,8 @@ export class WebRTCGateway implements OnGatewayInit, OnGatewayConnection, OnGate
       this.logger.log('=================================');
       this.logger.log(`Client ${client.id} joining room: ${data.groupId}`);
 
-      // Check if client is already in the room
-      const rooms = Array.from(client.rooms);
-      if (rooms.includes(data.groupId)) {
-        this.logger.log(`Client ${client.id} is already in room: ${data.groupId}`);
-        client.emit('joined-room', { groupId: data.groupId, alreadyJoined: true });
-        return { success: true };
-      }
-
       // Join the room
       await client.join(data.groupId);
-
-      // Track room clients
-      if (!this.roomClients.has(data.groupId)) {
-        this.roomClients.set(data.groupId, new Set());
-      }
-      this.roomClients.get(data.groupId)?.add(client.id);
 
       // Get all clients in the room
       const roomClients = await this.server.in(data.groupId).fetchSockets();
@@ -185,7 +168,7 @@ export class WebRTCGateway implements OnGatewayInit, OnGatewayConnection, OnGate
       });
 
       // Check if there's an active screen share session for this group
-      for (const [sessionId, session] of this.activeSessions) {
+      for (const [sessionId, session] of this.screenShareSessions) {
         if (session.groupId === data.groupId && session.status === 'active') {
           this.logger.log(`Informing new client about active session: ${sessionId}`);
           client.emit('screen-share-started', session);
@@ -208,8 +191,10 @@ export class WebRTCGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     @MessageBody() data: { userId: string; groupId: string; mediaType?: MediaType },
   ) {
     try {
-      this.logger.log('Starting screen share for group:', data.groupId);
-      this.logger.log('Screen share request details:', data);
+      this.logger.log('Starting screen share for group:');
+      this.logger.log(data.groupId);
+      this.logger.log('Screen share request details:');
+      this.logger.log(data);
 
       // Create session
       const session: ScreenShareSession = {
@@ -224,22 +209,225 @@ export class WebRTCGateway implements OnGatewayInit, OnGatewayConnection, OnGate
       };
 
       // Store session
-      this.activeSessions.set(session.id, session);
-      this.logger.log('Created session:', session);
+      this.screenShareSessions.set(session.id, session);
+      this.logger.log('Created session:');
+      this.logger.log(session);
 
       // Join session room
-      await client.join(session.id);
-      this.logger.log('Client joined session room:', session.id);
+      await client.join(`session-${session.id}`);
+      this.logger.log('Client joined session room:');
+      this.logger.log(`session-${session.id}`);
 
       // Broadcast to all clients in the group
       this.server.to(data.groupId).emit('screen-share-started', session);
-      this.logger.log('Broadcasted screen-share-started to group:', data.groupId);
+      this.logger.log('Broadcasted screen-share-started to group:');
+      this.logger.log(data.groupId);
 
       return session;
     } catch (error) {
       this.logger.error('Error in handleStartScreenShare:', error);
       client.emit('error', { message: 'Failed to start screen share' });
       throw error;
+    }
+  }
+
+  @UseGuards(WsJwtAuthGuard)
+  @SubscribeMessage('join-as-viewer')
+  async handleJoinAsViewer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { sessionId: string; userId: string; groupId: string },
+  ) {
+    try {
+      this.logger.log('Viewer joining session:', data);
+
+      const session = this.screenShareSessions.get(data.sessionId);
+      if (!session) {
+        this.logger.log('Session not found:', data.sessionId);
+        client.emit('error', { message: 'Session not found' });
+        return { success: false, error: 'Session not found' };
+      }
+
+      // Add viewer to session
+      if (!session.viewers.find(v => v.userId === data.userId)) {
+        session.viewers.push({
+          userId: data.userId,
+          socketId: client.id,
+          joinedAt: new Date(),
+        });
+      }
+
+      // Join the session room
+      await client.join(`session-${data.sessionId}`);
+
+      this.logger.log('Viewer added to session:', {
+        sessionId: data.sessionId,
+        viewerCount: session.viewers.length
+      });
+
+      // Find sharer by searching through all room sockets
+      const roomSockets = await this.server.in(data.groupId).fetchSockets();
+      const sharerSocket = roomSockets.find(
+        socket => socket.handshake.query.userId === session.sharerId
+      );
+
+      if (sharerSocket) {
+        sharerSocket.emit('viewer-joined', {
+          sessionId: data.sessionId,
+          viewerId: data.userId,
+          viewerSocketId: client.id
+        });
+        this.logger.log('Notified sharer about new viewer');
+      } else {
+        this.logger.warn('Sharer socket not found in room');
+      }
+
+      // Confirm to viewer
+      client.emit('viewer-joined', {
+        sessionId: data.sessionId,
+        status: 'success'
+      });
+
+      return { success: true };
+    } catch (error) {
+      this.logger.error('Error in handleJoinAsViewer:', error);
+      client.emit('error', { message: 'Failed to join as viewer' });
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  @UseGuards(WsJwtAuthGuard)
+  @SubscribeMessage('offer')
+  async handleOffer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { sessionId: string; offer: RTCSessionDescriptionInit; targetId: string },
+  ) {
+    try {
+      this.logger.log('Relaying offer from sharer to viewer');
+
+      const session = this.screenShareSessions.get(data.sessionId);
+      if (!session) return;
+
+      // Find target viewer socket
+      const targetViewer = session.viewers.find(v => v.userId === data.targetId);
+      if (targetViewer) {
+        // Get socket by ID from server
+        const allSockets = await this.server.fetchSockets();
+        const targetSocket = allSockets.find(s => s.id === targetViewer.socketId);
+
+        if (targetSocket) {
+          targetSocket.emit('offer', {
+            sessionId: data.sessionId,
+            offer: data.offer,
+            fromUserId: session.sharerId
+          });
+          this.logger.log('Offer relayed to viewer');
+        } else {
+          this.logger.warn('Target viewer socket not found');
+        }
+      } else {
+        this.logger.warn('Target viewer not found in session');
+      }
+
+      return { success: true };
+    } catch (error) {
+      this.logger.error('Error in handleOffer:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  @UseGuards(WsJwtAuthGuard)
+  @SubscribeMessage('answer')
+  async handleAnswer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { sessionId: string; answer: RTCSessionDescriptionInit; targetId: string },
+  ) {
+    try {
+      this.logger.log('Relaying answer from viewer to sharer');
+
+      const session = this.screenShareSessions.get(data.sessionId);
+      if (!session) return;
+
+      // Get the viewer's userId from the client socket
+      const viewerUserId = client.handshake.query.userId as string;
+
+      // Find sharer socket using room-based search
+      const roomSockets = await this.server.in(session.groupId).fetchSockets();
+      const sharerSocket = roomSockets.find(
+        socket => socket.handshake.query.userId === session.sharerId
+      );
+
+      if (sharerSocket) {
+        sharerSocket.emit('answer', {
+          sessionId: data.sessionId,
+          answer: data.answer,
+          fromUserId: viewerUserId  // 使用viewer的ID而不是targetId
+        });
+        this.logger.log('Answer relayed to sharer from viewer:', viewerUserId);
+      } else {
+        this.logger.warn('Sharer socket not found');
+      }
+
+      return { success: true };
+    } catch (error) {
+      this.logger.error('Error in handleAnswer:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  @UseGuards(WsJwtAuthGuard)
+  @SubscribeMessage('ice-candidate')
+  async handleIceCandidate(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { sessionId: string; candidate: RTCIceCandidateInit; targetId: string },
+  ) {
+    try {
+      this.logger.log('Relaying ICE candidate');
+
+      const session = this.screenShareSessions.get(data.sessionId);
+      if (!session) return;
+
+      // Get sender's info from socket handshake
+      const senderUserId = client.handshake.query.userId as string;
+
+      if (senderUserId === session.sharerId) {
+        // Sharer sending to viewer
+        const targetViewer = session.viewers.find(v => v.userId === data.targetId);
+        if (targetViewer) {
+          const allSockets = await this.server.fetchSockets();
+          const targetSocket = allSockets.find(s => s.id === targetViewer.socketId);
+
+          if (targetSocket) {
+            targetSocket.emit('ice-candidate', {
+              sessionId: data.sessionId,
+              candidate: data.candidate
+            });
+            this.logger.log('ICE candidate relayed to viewer');
+          } else {
+            this.logger.warn('Target viewer socket not found');
+          }
+        }
+      } else {
+        // Viewer sending to sharer
+        const roomSockets = await this.server.in(session.groupId).fetchSockets();
+        const sharerSocket = roomSockets.find(
+          socket => socket.handshake.query.userId === session.sharerId
+        );
+
+        if (sharerSocket) {
+          sharerSocket.emit('ice-candidate', {
+            sessionId: data.sessionId,
+            candidate: data.candidate
+          });
+          this.logger.log('ICE candidate relayed to sharer');
+        } else {
+          this.logger.warn('Sharer socket not found');
+        }
+      }
+
+      return { success: true };
+    } catch (error) {
+      this.logger.error('Error in handleIceCandidate:', error);
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -252,7 +440,7 @@ export class WebRTCGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     try {
       this.logger.log('Ending screen share session:', data.sessionId);
 
-      const session = this.activeSessions.get(data.sessionId);
+      const session = this.screenShareSessions.get(data.sessionId);
       if (!session) {
         this.logger.warn(`Session not found: ${data.sessionId}`);
         return { success: false, error: 'Session not found' };
@@ -267,11 +455,11 @@ export class WebRTCGateway implements OnGatewayInit, OnGatewayConnection, OnGate
       this.logger.log('Broadcasted screen-share-ended to group:', session.groupId);
 
       // Clean up
-      this.activeSessions.delete(data.sessionId);
+      this.screenShareSessions.delete(data.sessionId);
 
       // Leave session room
-      const sessionSockets = await this.server.in(data.sessionId).fetchSockets();
-      sessionSockets.forEach(socket => socket.leave(data.sessionId));
+      const sessionSockets = await this.server.in(`session-${data.sessionId}`).fetchSockets();
+      sessionSockets.forEach(socket => socket.leave(`session-${data.sessionId}`));
 
       return { success: true, session };
     } catch (error) {
@@ -282,106 +470,18 @@ export class WebRTCGateway implements OnGatewayInit, OnGatewayConnection, OnGate
   }
 
   @UseGuards(WsJwtAuthGuard)
-  @SubscribeMessage('webrtc-signal')
-  async handleWebRTCSignal(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() signal: any,
-  ) {
-    try {
-      this.logger.log('Received WebRTC signal:', {
-        type: signal.type,
-        from: signal.from,
-        to: signal.to,
-        sessionId: signal.sessionId,
-      });
-
-      // Validate signal
-      if (!signal.type || !signal.from || !signal.sessionId) {
-        throw new Error('Invalid signal format');
-      }
-
-      // Handle different signal types
-      if (signal.to === 'all') {
-        // Broadcast to all in the session except sender
-        client.to(signal.sessionId).emit('webrtc-signal', signal);
-        this.logger.log(`Broadcasted ${signal.type} signal to session: ${signal.sessionId}`);
-      } else if (signal.to) {
-        // Send to specific client
-        const targetSockets = await this.server.fetchSockets();
-        const targetSocket = targetSockets.find(
-          s => s.handshake.query.userId === signal.to
-        );
-
-        if (targetSocket) {
-          targetSocket.emit('webrtc-signal', signal);
-          this.logger.log(`Sent ${signal.type} signal to user: ${signal.to}`);
-        } else {
-          this.logger.warn(`Target socket not found for user: ${signal.to}`);
-        }
-      }
-
-      return { success: true };
-    } catch (error) {
-      this.logger.error('Error in handleWebRTCSignal:', error);
-      client.emit('error', { message: 'Failed to process WebRTC signal' });
-      return { success: false, error: (error as Error).message };
-    }
-  }
-
-  @UseGuards(WsJwtAuthGuard)
   @SubscribeMessage('get-active-sessions')
   async handleGetActiveSessions(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { groupId: string },
   ) {
     try {
-      const sessions = Array.from(this.activeSessions.values())
+      const sessions = Array.from(this.screenShareSessions.values())
         .filter(session => session.groupId === data.groupId && session.status === 'active');
 
       return { success: true, sessions };
     } catch (error) {
       this.logger.error('Error in handleGetActiveSessions:', error);
-      return { success: false, error: (error as Error).message };
-    }
-  }
-
-  @UseGuards(WsJwtAuthGuard)
-  @SubscribeMessage('request-offer')
-  async handleRequestOffer(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: { sessionId: string; from: string; to: string },
-  ) {
-    try {
-      this.logger.log('Requesting offer:', data);
-
-      // Get the session
-      const session = this.activeSessions.get(data.sessionId);
-      if (!session) {
-        throw new Error('Session not found');
-      }
-
-      // Find the sharer's socket
-      const sharerSockets = await this.server.fetchSockets();
-      const sharerSocket = sharerSockets.find(
-        s => s.handshake.query.userId === data.to
-      );
-
-      if (sharerSocket) {
-        // Forward the request to the sharer
-        sharerSocket.emit('offer-requested', {
-          sessionId: data.sessionId,
-          from: data.from,
-          to: data.to
-        });
-        this.logger.log(`Forwarded offer request to sharer: ${data.to}`);
-      } else {
-        this.logger.warn(`Sharer socket not found: ${data.to}`);
-      }
-
-      return { success: true };
-    } catch (error) {
-      this.logger.error('Error in handleRequestOffer:', error);
-      client.emit('error', { message: 'Failed to request offer' });
       return { success: false, error: (error as Error).message };
     }
   }

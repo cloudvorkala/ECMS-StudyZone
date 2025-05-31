@@ -8,14 +8,6 @@ import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
-interface WebRTCSignal {
-  type: 'offer' | 'answer' | 'candidate' | 'ice-candidate';
-  from: string;
-  to: string;
-  sessionId: string;
-  data?: RTCSessionDescriptionInit | RTCIceCandidateInit;
-}
-
 interface ScreenShareResponse {
   id: string;
   sharerId: string;
@@ -47,21 +39,16 @@ interface User {
   role: string;
 }
 
-interface ViewerEvent {
-  viewerId: string;
-  sessionId: string;
-}
-
 export default function MentorScreenSharePage() {
   const router = useRouter();
   const { groupId } = router.query;
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionState, setConnectionState] = useState<string>('Disconnected');
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const [activeSession, setActiveSession] = useState<ScreenShareSession | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const [viewerCount, setViewerCount] = useState(0);
 
   // Use refs to store mutable values without causing re-renders
@@ -69,6 +56,7 @@ export default function MentorScreenSharePage() {
   const activeSessionRef = useRef<ScreenShareSession | null>(null);
   const userRef = useRef<User | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
 
   // Update refs when state changes
   socketRef.current = socket;
@@ -76,43 +64,13 @@ export default function MentorScreenSharePage() {
   userRef.current = user;
   mediaStreamRef.current = mediaStream;
 
-  // Handle answer signal
-  const handleAnswer = useCallback(async (signal: WebRTCSignal) => {
-    try {
-      const peerConnections = peerConnectionsRef.current;
-      const pc = peerConnections.get(signal.from);
-      if (pc && signal.data) {
-        console.log('Setting remote description for:', signal.from);
-        await pc.setRemoteDescription(new RTCSessionDescription(signal.data as RTCSessionDescriptionInit));
-      }
-    } catch (error) {
-      console.error('Error handling answer:', error);
-    }
-  }, []);
-
-  // Handle ICE candidate
-  const handleIceCandidate = useCallback(async (signal: WebRTCSignal) => {
-    try {
-      const peerConnections = peerConnectionsRef.current;
-      const pc = peerConnections.get(signal.from);
-      if (pc && signal.data) {
-        console.log('Adding ICE candidate from:', signal.from);
-        await pc.addIceCandidate(new RTCIceCandidate(signal.data as RTCIceCandidateInit));
-      }
-    } catch (error) {
-      console.error('Error handling ICE candidate:', error);
-    }
-  }, []);
-
   // Create peer connection for a viewer
   const createPeerConnection = useCallback((viewerId: string, stream: MediaStream) => {
     console.log('Creating peer connection for viewer:', viewerId);
 
     const pc = new RTCPeerConnection({
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-      ],
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+      iceCandidatePoolSize: 10
     });
 
     // Add tracks
@@ -125,12 +83,10 @@ export default function MentorScreenSharePage() {
     pc.onicecandidate = (event) => {
       if (event.candidate && socketRef.current && activeSessionRef.current) {
         console.log('Sending ICE candidate to viewer:', viewerId);
-        socketRef.current.emit('webrtc-signal', {
-          type: 'ice-candidate',
+        socketRef.current.emit('ice-candidate', {
           sessionId: activeSessionRef.current.id,
-          from: userRef.current?.id,
-          to: viewerId,
-          data: event.candidate,
+          candidate: event.candidate,
+          targetId: viewerId,
         });
       }
     };
@@ -150,17 +106,16 @@ export default function MentorScreenSharePage() {
   // Create and send offer to a viewer
   const createOfferForViewer = useCallback(async (viewerId: string, stream: MediaStream) => {
     try {
+      console.log('Creating offer for viewer:', viewerId);
       const pc = createPeerConnection(viewerId, stream);
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
       if (socketRef.current && activeSessionRef.current) {
-        socketRef.current.emit('webrtc-signal', {
-          type: 'offer',
+        socketRef.current.emit('offer', {
           sessionId: activeSessionRef.current.id,
-          from: userRef.current?.id,
-          to: viewerId,
-          data: offer,
+          offer: offer,
+          targetId: viewerId,
         });
         console.log('Sent offer to viewer:', viewerId);
       }
@@ -203,9 +158,8 @@ export default function MentorScreenSharePage() {
     toast.success('Screen sharing stopped');
   }, []);
 
-  // Main initialization effect
+  // Main initialization effect - 只处理socket连接
   useEffect(() => {
-    // Prevent multiple executions
     if (!groupId) return;
 
     const storedUser = sessionStorage.getItem('user');
@@ -251,8 +205,6 @@ export default function MentorScreenSharePage() {
       path: '/socket.io',
       autoConnect: true,
       forceNew: true,
-      upgrade: true,
-      rememberUpgrade: true,
     });
 
     // Connection events
@@ -260,6 +212,8 @@ export default function MentorScreenSharePage() {
       console.log('Connected to WebRTC server');
       console.log('Socket ID:', newSocket.id);
       setIsConnected(true);
+      setConnectionState('Connected to server');
+
       // Join the group room
       newSocket.emit('join-room', { groupId: groupId as string });
     });
@@ -276,9 +230,6 @@ export default function MentorScreenSharePage() {
     newSocket.on('connect_error', (error) => {
       console.error('Connection error:', error);
       setIsConnected(false);
-      if (error.message.includes('xhr poll error')) {
-        console.log('Falling back to polling...');
-      }
       toast.error(`Connection failed: ${error.message}`);
     });
 
@@ -325,86 +276,101 @@ export default function MentorScreenSharePage() {
       newSocket.disconnect();
 
       // Clean up peer connections
-      const peerConnections = peerConnectionsRef.current;
-      peerConnections.forEach((pc) => {
+      peerConnectionsRef.current.forEach((pc) => {
         pc.close();
       });
-      peerConnections.clear();
+      peerConnectionsRef.current.clear();
 
       // Stop media stream
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
       }
     };
-  }, [groupId, router]); // Only depend on stable values
+  }, [groupId, router]);
 
-  // Set up WebRTC event handlers in a separate effect
+  // WebRTC事件处理 - 单独的useEffect
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !user) return;
 
-    // WebRTC signaling
-    const handleWebRTCSignal = async (signal: WebRTCSignal) => {
-      console.log('Received WebRTC signal:', signal);
-
-      if (signal.type === 'answer') {
-        await handleAnswer(signal);
-      } else if (signal.type === 'ice-candidate' || signal.type === 'candidate') {
-        await handleIceCandidate(signal);
-      }
-    };
-
-    // add offer request handle
-    const handleOfferRequested = async (data: { sessionId: string; from: string; to: string }) => {
-      console.log('Offer requested by viewer:', data);
-      if (mediaStreamRef.current && user) {
-        try {
-          console.log('Creating new offer for viewer:', data.from);
-          await createOfferForViewer(data.from, mediaStreamRef.current);
-        } catch (error) {
-          console.error('Error creating/sending offer:', error);
-          toast.error('Failed to create offer');
-        }
-      } else {
-        console.warn('No media stream available or user not authenticated');
-      }
-    };
-
-    // Viewer events
-    const handleViewerJoined = async (data: ViewerEvent) => {
+    // Handle viewer joined event
+    const handleViewerJoined = async (data: { sessionId: string; viewerId: string; viewerSocketId: string }) => {
       console.log('Viewer joined:', data);
       setViewerCount(prev => prev + 1);
 
-      // If screen sharing is active, create offer for new viewer
+      // Automatically create offer for the new viewer
       if (mediaStreamRef.current && activeSessionRef.current) {
+        console.log('Creating offer for new viewer:', data.viewerId);
         await createOfferForViewer(data.viewerId, mediaStreamRef.current);
+      } else {
+        console.error('Cannot create offer - missing media stream or active session:', {
+          hasMediaStream: !!mediaStreamRef.current,
+          hasActiveSession: !!activeSessionRef.current
+        });
       }
     };
 
-    const handleViewerLeft = (data: ViewerEvent) => {
-      console.log('Viewer left:', data);
-      setViewerCount(prev => Math.max(0, prev - 1));
+    // Handle WebRTC answer from viewer
+    const handleAnswer = async (data: { sessionId: string; answer: RTCSessionDescriptionInit; fromUserId: string }) => {
+      console.log('Received answer from viewer:', data.fromUserId);
+      console.log('Answer data:', data.answer);
 
-      // Clean up peer connection for this viewer
-      const peerConnections = peerConnectionsRef.current;
-      const pc = peerConnections.get(data.viewerId);
-      if (pc) {
-        pc.close();
-        peerConnections.delete(data.viewerId);
+      const pc = peerConnectionsRef.current.get(data.fromUserId);
+      if (pc && data.answer) {
+        try {
+          console.log('Setting remote description for viewer:', data.fromUserId);
+          await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+          console.log('Successfully set remote description for viewer:', data.fromUserId);
+          console.log('Peer connection state:', pc.connectionState);
+          console.log('Signaling state:', pc.signalingState);
+        } catch (error) {
+          console.error('Error setting remote description for viewer:', data.fromUserId, error);
+        }
+      } else {
+        console.error('No peer connection found for viewer or no answer data:', {
+          viewerId: data.fromUserId,
+          hasPc: !!pc,
+          hasAnswer: !!data.answer,
+          peerConnections: Array.from(peerConnectionsRef.current.keys())
+        });
       }
     };
 
-    socket.on('webrtc-signal', handleWebRTCSignal);
-    socket.on('offer-requested', handleOfferRequested);
+    // Handle ICE candidates from viewers
+    const handleIceCandidate = async (data: { sessionId: string; candidate: RTCIceCandidateInit }) => {
+      console.log('Received ICE candidate from viewer');
+
+      // 由于我们不知道这个ICE candidate来自哪个viewer，
+      // 我们需要根据当前的peer connections来判断
+      // 通常在1对1的情况下，我们只有一个活跃的连接
+
+      const peerConnections = Array.from(peerConnectionsRef.current.entries());
+
+      for (const [viewerId, pc] of peerConnections) {
+        // 检查peer connection是否已经设置了remote description
+        if (pc.remoteDescription) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+            console.log('Added ICE candidate for viewer:', viewerId);
+            break; // 成功添加后跳出循环
+          } catch (error) {
+            console.error('Error adding ICE candidate for viewer:', viewerId, error);
+          }
+        } else {
+          console.log('Skipping ICE candidate for viewer', viewerId, '- no remote description yet');
+        }
+      }
+    };
+
     socket.on('viewer-joined', handleViewerJoined);
-    socket.on('viewer-left', handleViewerLeft);
+    socket.on('answer', handleAnswer);
+    socket.on('ice-candidate', handleIceCandidate);
 
     return () => {
-      socket.off('webrtc-signal', handleWebRTCSignal);
-      socket.off('offer-requested', handleOfferRequested);
       socket.off('viewer-joined', handleViewerJoined);
-      socket.off('viewer-left', handleViewerLeft);
+      socket.off('answer', handleAnswer);
+      socket.off('ice-candidate', handleIceCandidate);
     };
-  }, [socket, handleAnswer, handleIceCandidate, createOfferForViewer]);
+  }, [socket, user, createOfferForViewer]);
 
   // Start screen sharing
   const startScreenShare = async () => {
@@ -415,6 +381,12 @@ export default function MentorScreenSharePage() {
 
     try {
       console.log('Starting screen share...');
+
+      // Check browser compatibility
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+        toast.error('Your browser does not support screen sharing. Please use Chrome, Firefox, or Edge.');
+        return;
+      }
 
       // Get display media
       const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -428,7 +400,7 @@ export default function MentorScreenSharePage() {
         },
       }).catch(error => {
         console.error('Error getting display media:', error);
-        throw new Error('Failed to access screen sharing');
+        throw new Error('Failed to access screen sharing. Please make sure you have granted permission.');
       });
 
       console.log('Got media stream:', stream);
@@ -465,13 +437,6 @@ export default function MentorScreenSharePage() {
         console.log('User stopped sharing');
         stopScreenShare();
       };
-
-      // Create offers for existing viewers
-      if (session.viewers && session.viewers.length > 0) {
-        for (const viewerId of session.viewers) {
-          await createOfferForViewer(viewerId, stream);
-        }
-      }
 
     } catch (error) {
       console.error('Error starting screen share:', error);
@@ -515,7 +480,7 @@ export default function MentorScreenSharePage() {
               <div>
                 <p className="text-sm text-gray-500">Connection Status</p>
                 <p className={`font-semibold ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
-                  {isConnected ? 'Connected' : 'Disconnected'}
+                  {connectionState}
                 </p>
               </div>
               <div>
