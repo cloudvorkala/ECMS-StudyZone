@@ -15,6 +15,7 @@ import { CalendarModule } from './calendar/calendar.module';
 import { VoiceModule } from './voice/voice.module';
 import { StudyGroupsModule } from './study-groups/study-groups.module';
 import { ChatModule } from './chat/chat.module';
+import { WebRTCModule } from './webrtc/webrtc.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ChatModule } from './chat/chat.module';
     VoiceModule,
     StudyGroupsModule,
     ChatModule,
+    WebRTCModule,
   ],
 })
 export class AppModule {}
