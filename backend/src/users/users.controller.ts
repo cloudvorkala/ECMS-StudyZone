@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, ConflictException, UseGuards, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, NotFoundException, ConflictException, UseGuards, Logger, Put, Request, HttpException, HttpStatus } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { RegisterMentorDto } from './dto/register-mentor.dto';
@@ -8,6 +8,7 @@ import { Public } from '../auth/public.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { UpdateStudentProfileDto } from './dto/update-student-profile.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -74,6 +75,47 @@ export class UsersController {
   async getMentors() {
     this.logger.debug('Getting all mentors');
     return this.usersService.findMentors();
+  }
+
+  @Get('students')
+  @Roles('mentor')
+  async findAllStudents() {
+    this.logger.debug('Getting all students');
+    return this.usersService.findByRole(UserRole.STUDENT);
+  }
+
+  @Put('mentor/profile')
+  @Roles('mentor')
+  async updateMentorProfile(@Request() req, @Body() updateData: Partial<User>) {
+    this.logger.debug(`Updating mentor profile for user: ${req.user.id}`);
+    return this.usersService.updateMentorProfile(req.user.id, updateData);
+  }
+
+  @Put('student/profile')
+  @UseGuards(JwtAuthGuard)
+  async updateStudentProfile(
+    @Request() req,
+    @Body() updateProfileDto: UpdateStudentProfileDto
+  ) {
+    try {
+      const updatedUser = await this.usersService.updateStudentProfile(req.user.id, updateProfileDto);
+      return {
+        message: 'Profile updated successfully',
+        user: updatedUser
+      };
+    } catch (error) {
+      console.error('Error updating student profile:', error);
+      if (error instanceof Error) {
+        throw new HttpException(
+          error.message,
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      throw new HttpException(
+        'Failed to update profile',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   @Get(':id')

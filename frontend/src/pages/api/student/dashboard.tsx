@@ -11,7 +11,6 @@ export default function StudentDashboard() {
   };
 
   return (
-
     <ProtectedRoute allowedRoles={['student']}>
       <div className="min-h-screen bg-gray-100 p-8 flex">
         {/* Left Navigation Panel  */}
@@ -25,7 +24,10 @@ export default function StudentDashboard() {
           <Link href="/calendar" className="block p-4 bg-indigo-100 rounded-lg hover:bg-indigo-200">
             📅 Session Time Suggestions
           </Link>
-          <Link href="/settings" className="block p-4 bg-gray-200 rounded-lg hover:bg-gray-300">
+          <Link href="/voice-chat" className="block p-4 bg-purple-100 rounded-lg hover:bg-purple-200">
+            🎤 Voice Chat
+          </Link>
+          <Link href="/student/editprofile" className="block p-4 bg-gray-200 rounded-lg hover:bg-gray-300">
             ⚙️ Edit Profile
           </Link>
            {/* Log Out Button */}
@@ -47,6 +49,7 @@ export default function StudentDashboard() {
             <li>💡 Click &quot;Recommended Mentors&quot; to explore matched mentors</li>
             <li>🗓️ Check &quot;Session Time Suggestions&quot; for availability</li>
             <li>📋 Track your bookings and update your profile anytime</li>
+            <li>🎤 Join voice chat rooms to communicate with mentors</li>
           </ul>
           <div className="bg-green-100 text-green-700 p-3 rounded mt-4">
             📣 Announcement: Mid-semester tutoring sessions open now! Book early to reserve your slot.

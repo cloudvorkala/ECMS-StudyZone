@@ -1,6 +1,9 @@
 import axios from 'axios';
+import https from 'https';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'https://localhost:3000') + '/api';
+
+console.log('API Base URL:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -8,26 +11,52 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true,
+  // ignore SSL certificate errors in development environment
+  ...(process.env.NODE_ENV === 'development' ? {
+    httpsAgent: new https.Agent({
+      rejectUnauthorized: false
+    })
+  } : {})
 });
 
-// 请求拦截器：添加 token
-api.interceptors.request.use((config) => {
-  // 只在浏览器环境中使用 sessionStorage
-  if (typeof window !== 'undefined') {
-    const token = sessionStorage.getItem('token');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+// Request interceptor
+api.interceptors.request.use(
+  (config) => {
+    console.log('Making request to:', config.url);
+    // only use sessionStorage in browser environment
+    if (typeof window !== 'undefined') {
+      const token = sessionStorage.getItem('token');
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
-  }
-  return config;
-});
-
-// 响应拦截器：处理错误
-api.interceptors.response.use(
-  (response) => response,
+    return config;
+  },
   (error) => {
-    console.error('API Error:', error.response?.data || error.message);
-    // 只在浏览器环境中使用 sessionStorage
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor
+api.interceptors.response.use(
+  (response) => {
+    console.log('Response received:', response.status);
+    return response;
+  },
+  (error) => {
+    console.error('API Error:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers
+      }
+    });
+
+    // only use sessionStorage in browser environment
     if (typeof window !== 'undefined' && error.response?.status === 401) {
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
@@ -37,7 +66,7 @@ api.interceptors.response.use(
   }
 );
 
-// 类型定义
+// type definitions
 interface UserData {
   fullName: string;
   email: string;
@@ -63,7 +92,7 @@ interface LoginResponse {
   };
 }
 
-// 认证相关 API
+// authentication related API
 export const authAPI = {
   login: async (email: string, password: string, role: string): Promise<LoginResponse> => {
     const response = await api.post<LoginResponse>('/auth/login', { email, password, role });
@@ -75,7 +104,7 @@ export const authAPI = {
   },
 };
 
-// 预约相关 API
+// booking related API
 export const bookingAPI = {
   getBookings: async () => {
     const response = await api.get('/bookings');
@@ -91,7 +120,7 @@ export const bookingAPI = {
   },
 };
 
-// 通知相关 API
+// notification related API
 export const notificationAPI = {
   getNotifications: async () => {
     const response = await api.get('/notifications');

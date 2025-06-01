@@ -88,12 +88,8 @@ export default function MentorDashboard() {
           <Link href="/mentor/groups" className="block p-4 bg-green-100 rounded-lg hover:bg-green-200">
             👥 Study Groups
           </Link>
-          <Link href="/notifications" className="block p-4 bg-purple-100 rounded-lg hover:bg-purple-200">
+          <Link href="/mentor/notifications" className="block p-4 bg-purple-100 rounded-lg hover:bg-purple-200">
             🔔 Notifications
-          </Link>
-          {/* New Booking Requests Button */}
-          <Link href="/mentor/booking-requests" className="block p-4 bg-orange-100 rounded-lg hover:bg-orange-200">
-            📩 Booking Requests
           </Link>
           {/* Profile Button */}
           <Link href="/mentor/profile" className="block p-4 bg-gray-300 rounded-lg hover:bg-gray-400">
@@ -127,19 +123,19 @@ export default function MentorDashboard() {
               </div>
             ) : (
               <>
-                <div className="bg-white p-6 rounded-xl shadow-md">
+                <div key="total-bookings" className="bg-white p-6 rounded-xl shadow-md">
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Bookings</h3>
                   <p className="text-3xl font-bold text-blue-600">{stats.totalBookings}</p>
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-md">
+                <div key="pending-bookings" className="bg-white p-6 rounded-xl shadow-md">
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Pending Bookings</h3>
                   <p className="text-3xl font-bold text-yellow-600">{stats.pendingBookings}</p>
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-md">
+                <div key="completed-sessions" className="bg-white p-6 rounded-xl shadow-md">
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Completed Sessions</h3>
                   <p className="text-3xl font-bold text-green-600">{stats.completedSessions}</p>
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-md">
+                <div key="average-rating" className="bg-white p-6 rounded-xl shadow-md">
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Average Rating</h3>
                   <p className="text-3xl font-bold text-purple-600">{stats.averageRating.toFixed(1)} ⭐</p>
                 </div>
@@ -151,19 +147,19 @@ export default function MentorDashboard() {
           <div className="bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Link href="/calendar" className="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+              <Link key="set-hours" href="/calendar" className="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                 <h3 className="font-medium text-blue-700">📅 Set Available Hours</h3>
                 <p className="text-sm text-gray-600">Update your weekly availability</p>
               </Link>
-              <Link href="/mentor/booking-requests" className="p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
+              <Link key="review-requests" href="/mentor/booking-requests" className="p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
                 <h3 className="font-medium text-yellow-700">📝 Review Requests</h3>
                 <p className="text-sm text-gray-600">Check new booking requests</p>
               </Link>
-              <Link href="/mentor/groups" className="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+              <Link key="manage-groups" href="/mentor/groups" className="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
                 <h3 className="font-medium text-green-700">👥 Manage Groups</h3>
                 <p className="text-sm text-gray-600">Create or join study groups</p>
               </Link>
-              <Link href="/mentor/profile" className="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+              <Link key="update-profile" href="/mentor/profile" className="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
                 <h3 className="font-medium text-purple-700">👤 Update Profile</h3>
                 <p className="text-sm text-gray-600">Edit your expertise and information</p>
               </Link>
@@ -191,8 +187,8 @@ export default function MentorDashboard() {
                   <div key={booking._id} className="border rounded-lg p-4 hover:bg-gray-50">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-semibold text-lg">{booking.student.fullName}</h3>
-                        <p className="text-sm text-gray-600">{booking.student.email}</p>
+                        <h3 className="font-semibold text-lg">{booking.student?.fullName || 'Unknown Student'}</h3>
+                        <p className="text-sm text-gray-600">{booking.student?.email || 'No email provided'}</p>
                         <p className="mt-2">
                           <span className="font-medium">Time:</span>{' '}
                           {formatDateTime(booking.startTime)} - {formatDateTime(booking.endTime)}
@@ -204,18 +200,27 @@ export default function MentorDashboard() {
                         )}
                       </div>
                       <span className={`px-3 py-1 rounded-full text-sm ${
-                        booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                        booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                        booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                        (booking.status || 'pending') === 'confirmed' ? 'bg-green-100 text-green-800' :
+                        (booking.status || 'pending') === 'cancelled' ? 'bg-red-100 text-red-800' :
+                        (booking.status || 'pending') === 'completed' ? 'bg-blue-100 text-blue-800' :
                         'bg-yellow-100 text-yellow-800'
                       }`}>
-                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                        {(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}
                       </span>
                     </div>
                   </div>
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Voice Chat Card */}
+          <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+            <h3 className="text-xl font-semibold mb-4">Voice Chat</h3>
+            <p className="text-gray-600 mb-4">Join voice chat rooms for real-time communication with students.</p>
+            <Link href="/voice-chat" className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+              Go to Voice Chat
+            </Link>
           </div>
         </div>
       </div>

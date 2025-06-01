@@ -1,10 +1,12 @@
 // src/app.module.ts
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import Configuration from './config/configuration';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { UsersService } from './users/users.service';
+import { NotificationsModule } from './notifications/notifications.module';
 // import { MentorsModule } from './mentors/mentors.module';
 // import { NotificationsModule } from './notifications/notifications.module';
 // import { HelpRequestsModule } from './help-requests/help-requests.module';
@@ -12,6 +14,10 @@ import { BookingsModule } from './bookings/bookings.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { CalendarModule } from './calendar/calendar.module';
+import { VoiceModule } from './voice/voice.module';
+import { StudyGroupsModule } from './study-groups/study-groups.module';
+import { ChatModule } from './chat/chat.module';
+import { WebRTCModule } from './webrtc/webrtc.module';
 
 @Module({
   imports: [
@@ -35,6 +41,7 @@ import { CalendarModule } from './calendar/calendar.module';
     //function module
     AuthModule,
     UsersModule,
+    NotificationsModule,
     // // MentorsModule,
     // NotificationsModule,
     // HelpRequestsModule,
@@ -42,6 +49,17 @@ import { CalendarModule } from './calendar/calendar.module';
     RoomsModule,
     SessionsModule,
     CalendarModule,
+    VoiceModule,
+    StudyGroupsModule,
+    ChatModule,
+    WebRTCModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+  constructor(private readonly usersService: UsersService) {}
+
+  async onModuleInit() {
+    // create admin user
+    await this.usersService.createAdminUser();
+  }
+}
