@@ -28,7 +28,7 @@ export default function Login() {
     if (role === 'student' || role === 'mentor') {
       return /^[a-zA-Z]{1,5}\d{1,6}$/.test(email);
     } else if (role === 'admin') {
-      return /^[a-zA-Z]+\.[a-zA-Z]+$/.test(email);
+      return email === 'admin';
     }
     return false;
   };
@@ -57,6 +57,7 @@ export default function Login() {
 
     try {
       const fullEmail = `${email}@autuni.ac.nz`;
+
       console.log('Attempting login with:', { email: fullEmail, role });
       setDebugInfo(prev => prev + '\nAttempting login...');
 
@@ -82,7 +83,7 @@ export default function Login() {
       console.log('Redirecting to:', `/${response.data.user.role}/dashboard`);
       setDebugInfo(prev => prev + '\nRedirecting to: /' + response.data.user.role + '/dashboard');
 
-      // 添加延迟，以便查看日志
+      // delay for 2 seconds
       setTimeout(() => {
         router.push(`/${response.data.user.role}/dashboard`);
       }, 2000);

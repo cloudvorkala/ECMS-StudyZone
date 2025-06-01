@@ -4,6 +4,7 @@ import { Document } from 'mongoose';
 export enum UserRole {
   STUDENT = 'student',
   MENTOR = 'mentor',
+  ADMIN = 'admin',
 }
 
 @Schema()

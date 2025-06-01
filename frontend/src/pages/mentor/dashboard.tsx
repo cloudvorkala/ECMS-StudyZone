@@ -88,7 +88,7 @@ export default function MentorDashboard() {
           <Link href="/mentor/groups" className="block p-4 bg-green-100 rounded-lg hover:bg-green-200">
             👥 Study Groups
           </Link>
-          <Link href="/notifications" className="block p-4 bg-purple-100 rounded-lg hover:bg-purple-200">
+          <Link href="/mentor/notifications" className="block p-4 bg-purple-100 rounded-lg hover:bg-purple-200">
             🔔 Notifications
           </Link>
           {/* Profile Button */}

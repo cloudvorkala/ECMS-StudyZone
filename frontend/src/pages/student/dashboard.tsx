@@ -25,7 +25,7 @@ export default function StudentDashboard() {
           <Link href="/mentor-recommendation" className="block p-4 bg-blue-100 rounded-lg hover:bg-blue-200">
             👨‍🏫 Find Mentors
           </Link>
-          <Link href="/notifications" className="block p-4 bg-purple-100 rounded-lg hover:bg-purple-200">
+          <Link href="/student/notifications" className="block p-4 bg-purple-100 rounded-lg hover:bg-purple-200">
             🔔 Notifications
           </Link>
           {/* Profile Button */}

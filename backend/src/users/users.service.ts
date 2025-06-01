@@ -1,11 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User } from './schemas/user.schema';
+import { User, UserRole } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { UpdateStudentProfileDto } from './dto/update-student-profile.dto';
-import { UserRole } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
@@ -87,5 +86,33 @@ export class UsersService {
       }
       throw new Error('Failed to update student profile');
     }
+  }
+
+  // create admin user
+  async createAdminUser() {
+    const adminEmail = 'admin@autuni.ac.nz';
+    const adminPassword = 'test1234'; // hardcoded admin password
+
+    // check if admin user already exists
+    const existingAdmin = await this.findByEmail(adminEmail);
+    if (existingAdmin) {
+      console.log('Admin user already exists');
+      return existingAdmin;
+    }
+
+    // create admin user
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+    const adminUser = new this.userModel({
+      fullName: 'System Admin',
+      email: adminEmail,
+      password: hashedPassword,
+      role: UserRole.ADMIN,
+      expertise: [],
+      institution: 'StudyZone',
+      rating: 0,
+    });
+
+    console.log('Admin user created successfully');
+    return adminUser.save();
   }
 }
