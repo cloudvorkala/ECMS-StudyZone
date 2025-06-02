@@ -105,25 +105,28 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100 p-6">
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
+    <div
+      className="min-h-screen flex flex-col justify-center items-center"
+      style={{ background: 'var(--background)', color: 'var(--foreground)' }}
+    >
+      <div className="card w-full max-w-md">
         <div className="flex flex-col items-center mb-6">
-          <h1 className="text-3xl font-extrabold tracking-wide text-blue-700">ECMS</h1>
-          <h2 className="text-2xl font-bold mt-2">StudyZone Login</h2>
+          <h1 className="section-title text-blue-700 dark:text-blue-400">ECMS</h1>
+          <h2 className="section-title" style={{ fontSize: '1.25rem', marginBottom: 0 }}>StudyZone Login</h2>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex items-center border border-gray-300 rounded">
+          <div className="flex items-center card-input-group bg-transparent">
             <input
               type="text"
               placeholder="Email local part"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 p-2 outline-none rounded-l"
+              className="input rounded-l"
               required
               disabled={loading}
             />
-            <span className="px-3 bg-gray-100 text-gray-700 text-sm rounded-r select-none">
+            <span className="email-suffix px-3 text-sm rounded-r select-none">
               @autuni.ac.nz
             </span>
           </div>
@@ -133,7 +136,7 @@ export default function Login() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
+            className="input"
             required
             disabled={loading}
           />
@@ -141,7 +144,7 @@ export default function Login() {
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded"
+            className="input"
             disabled={loading}
           >
             <option value="student">Student</option>
@@ -151,7 +154,7 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-blue-400"
+            className={`btn w-full ${loading ? 'btn-disabled' : ''}`}
             disabled={loading}
           >
             {loading ? 'Logging in...' : 'Login'}
@@ -159,32 +162,32 @@ export default function Login() {
         </form>
 
         {error && (
-          <div className="mt-4 p-2 bg-red-100 text-red-700 text-sm text-center rounded">
+          <div className="mt-4 p-2 bg-red-100 text-red-700 rounded-lg text-center text-sm dark:bg-red-900/50 dark:text-red-200">
             {error}
           </div>
         )}
 
         {debugInfo && (
-          <div className="mt-4 p-2 bg-gray-100 text-gray-700 text-xs font-mono whitespace-pre-wrap">
+          <div className="mt-4 p-2 bg-gray-100 text-gray-700 text-xs font-mono whitespace-pre-wrap rounded-lg dark:bg-gray-700 dark:text-gray-300">
             {debugInfo}
           </div>
         )}
 
-        <div className="text-center text-sm text-gray-500 mt-4 space-y-2">
-          <p>
+        <div className="text-center text-sm mt-4 space-y-2">
+          <p className="text-gray-500 dark:text-gray-400">
             New student?{' '}
             <Link
               href="/student-registration"
-              className="text-blue-600 hover:underline"
+              className="text-blue-600 hover:underline dark:text-blue-400 dark:hover:text-blue-300 font-medium"
             >
               Register here
             </Link>
           </p>
-          <p>
+          <p className="text-gray-500 dark:text-gray-400">
             New mentor?{' '}
             <Link
               href="/mentor-registration"
-              className="text-blue-600 hover:underline"
+              className="text-blue-600 hover:underline dark:text-blue-400 dark:hover:text-blue-300 font-medium"
             >
               Apply here
             </Link>

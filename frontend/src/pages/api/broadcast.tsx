@@ -1,5 +1,4 @@
-// ✅ src/pages/api/broadcast.tsx
-// 管理员广播页面：发送通知到指定用户组或个人
+
 
 import React, { useState } from 'react';
 

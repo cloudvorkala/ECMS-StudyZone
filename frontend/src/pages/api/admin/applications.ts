@@ -1,9 +1,8 @@
-// ✅ src/pages/api/admin/applications.ts
-// 后端接口：返回 mentor 申请列表数据
+
 
 import { NextApiRequest, NextApiResponse } from 'next';
 
-// 模拟数据库中的申请数据
+
 const mentorApplications = [
   { id: 1, name: 'Alice Johnson', status: 'pending' },
   { id: 2, name: 'Zane Clark', status: 'approved' },

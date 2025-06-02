@@ -26,7 +26,7 @@ export class CalendarService {
     this.logger.debug(`Creating time slot for mentor: ${mentorId}`, createTimeSlotDto);
     const { startTime, endTime } = createTimeSlotDto;
 
-    // 验证时间
+    // Validate date format
     const start = new Date(startTime);
     const end = new Date(endTime);
 
@@ -38,7 +38,7 @@ export class CalendarService {
       throw new BadRequestException('End time must be after start time');
     }
 
-    // 检查时间冲突
+    // Check for time conflicts
     const conflictingSlot = await this.timeSlotModel.findOne({
       mentor: mentorId,
       $or: [
@@ -50,7 +50,7 @@ export class CalendarService {
     });
 
     if (conflictingSlot) {
-      throw new BadRequestException('Time slot conflicts with existing slot');
+        throw new BadRequestException('Time slot conflicts with existing slot');
     }
 
     try {

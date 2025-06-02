@@ -1,5 +1,4 @@
-// ✅ src/pages/api/student/booking-request.tsx
-// 页面：导师查看学生的预约请求并确认/拒绝
+
 
 export default function BookingRequestPage() {
     return (
@@ -9,7 +8,7 @@ export default function BookingRequestPage() {
           <p className="text-gray-700 mb-2">📅 <strong>Tuesday 1st April</strong></p>
           <p className="text-gray-700 mb-2">🕒 <strong>11am–12pm</strong></p>
           <p className="text-gray-700 mb-6">👤 Student: <strong>John Smith</strong></p>
-  
+
           <div className="flex justify-center gap-4">
             <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
               Confirm
@@ -22,4 +21,3 @@ export default function BookingRequestPage() {
       </div>
     );
   }
-  
