@@ -1,5 +1,4 @@
-// ✅ src/pages/api/student/settings.tsx
-// 学生设置页面 - Edit Profile
+
 
 import { useState } from 'react';
 

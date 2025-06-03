@@ -1,5 +1,4 @@
-// ✅ 文件路径：src/pages/admin/applications.tsx
-// 用于展示 Mentor 的申请状态列表页面（Pending 和 Approved 分区）
+
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';

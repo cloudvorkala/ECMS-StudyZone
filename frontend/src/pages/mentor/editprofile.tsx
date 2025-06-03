@@ -83,6 +83,8 @@ export default function MentorEditProfile() {
     setSuccess('');
     setSaving(true);
 
+    // Send PUT request to backend
+
     try {
       await api.put('/users/mentor/profile', profile);
 

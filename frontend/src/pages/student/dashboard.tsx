@@ -1,4 +1,4 @@
-// ✅ src/pages/student/dashboard.tsx
+
 import React from 'react';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';

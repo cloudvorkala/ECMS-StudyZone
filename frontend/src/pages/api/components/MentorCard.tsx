@@ -1,5 +1,4 @@
-// ✅ src/pages/api/components/MentorCard.tsx
-// 导师信息卡片组件（统一样式，支持预约按钮）
+
 
 import React from 'react';
 

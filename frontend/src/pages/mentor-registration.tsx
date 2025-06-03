@@ -1,4 +1,4 @@
-// pages/mentor-registration.tsx
+
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import api from '@/services/api';
@@ -57,7 +57,7 @@ export default function MentorRegistration() {
       institution,
       password,
     };
-
+    // Send registration data to backend API
     try {
       const response = await api.post('/users/register/mentor', data);
       console.log('Registration response:', response);
@@ -67,6 +67,7 @@ export default function MentorRegistration() {
         router.push('/');
       }
     } catch (error: unknown) {
+      // Handle API errors with proper type checking
       console.error('Registration error:', error);
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: ApiErrorResponse } };

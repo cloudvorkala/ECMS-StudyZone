@@ -1,5 +1,4 @@
-// ✅ src/pages/api/student/mentor-recommendation.tsx
-// 学生页面：根据课程推荐导师
+
 
 import { useState } from 'react';
 

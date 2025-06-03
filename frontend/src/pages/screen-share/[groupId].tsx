@@ -158,7 +158,7 @@ export default function MentorScreenSharePage() {
     toast.success('Screen sharing stopped');
   }, []);
 
-  // Main initialization effect - 只处理socket连接
+  // Main initialization effect - handle socket connection
   useEffect(() => {
     if (!groupId) return;
 
@@ -288,7 +288,7 @@ export default function MentorScreenSharePage() {
     };
   }, [groupId, router]);
 
-  // WebRTC事件处理 - 单独的useEffect
+  // WebRTC event handling - separate useEffect
   useEffect(() => {
     if (!socket || !user) return;
 
@@ -339,19 +339,19 @@ export default function MentorScreenSharePage() {
     const handleIceCandidate = async (data: { sessionId: string; candidate: RTCIceCandidateInit }) => {
       console.log('Received ICE candidate from viewer');
 
-      // 由于我们不知道这个ICE candidate来自哪个viewer，
-      // 我们需要根据当前的peer connections来判断
-      // 通常在1对1的情况下，我们只有一个活跃的连接
+      // Since we don't know which viewer this ICE candidate belongs to,
+      // we need to check our current peer connections
+      // In a 1-to-1 scenario, we usually have only one active connection
 
       const peerConnections = Array.from(peerConnectionsRef.current.entries());
 
       for (const [viewerId, pc] of peerConnections) {
-        // 检查peer connection是否已经设置了remote description
+        // Check if the peer connection has already set the remote description
         if (pc.remoteDescription) {
           try {
             await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
             console.log('Added ICE candidate for viewer:', viewerId);
-            break; // 成功添加后跳出循环
+            break; // Exit the loop after successful addition
           } catch (error) {
             console.error('Error adding ICE candidate for viewer:', viewerId, error);
           }

@@ -44,6 +44,8 @@ export class UsersService {
     return this.userModel.find({ role }).select('-password').exec();
   }
 
+  // Update user document in MongoDB
+
   async updateMentorProfile(id: string, updateData: Partial<User>): Promise<User> {
     const updatedUser = await this.userModel.findByIdAndUpdate(
       id,

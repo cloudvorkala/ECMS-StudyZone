@@ -87,6 +87,7 @@ export class UsersController {
   @Put('mentor/profile')
   @Roles('mentor')
   async updateMentorProfile(@Request() req, @Body() updateData: Partial<User>) {
+     // Pass user ID and update data to service layer
     this.logger.debug(`Updating mentor profile for user: ${req.user.id}`);
     return this.usersService.updateMentorProfile(req.user.id, updateData);
   }
