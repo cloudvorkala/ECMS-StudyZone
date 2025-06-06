@@ -1,68 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import api from '@/services/api';
-
-interface DashboardStats {
-  totalBookings: number;
-  pendingBookings: number;
-  completedSessions: number;
-  averageRating: number;
-}
-
-interface RecentBooking {
-  _id: string;
-  student: {
-    fullName: string;
-    email: string;
-  };
-  startTime: string;
-  endTime: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  notes?: string;
-}
 
 export default function MentorDashboard() {
   const router = useRouter();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalBookings: 0,
-    pendingBookings: 0,
-    completedSessions: 0,
-    averageRating: 0
-  });
-  const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      const [statsResponse, bookingsResponse] = await Promise.all([
-        api.get<DashboardStats>('/bookings/mentor/stats'),
-        api.get<RecentBooking[]>('/bookings/mentor/recent')
-      ]);
-      setStats(statsResponse.data);
-      setRecentBookings(bookingsResponse.data);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-NZ', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
 
   const handleLogout = () => {
     console.log('MentorDashboard - Logging out...');
@@ -114,35 +56,6 @@ export default function MentorDashboard() {
             </p>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            {loading ? (
-              <div className="col-span-4 text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading statistics...</p>
-              </div>
-            ) : (
-              <>
-                <div key="total-bookings" className="bg-white p-6 rounded-xl shadow-md">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Bookings</h3>
-                  <p className="text-3xl font-bold text-blue-600">{stats.totalBookings}</p>
-                </div>
-                <div key="pending-bookings" className="bg-white p-6 rounded-xl shadow-md">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Pending Bookings</h3>
-                  <p className="text-3xl font-bold text-yellow-600">{stats.pendingBookings}</p>
-                </div>
-                <div key="completed-sessions" className="bg-white p-6 rounded-xl shadow-md">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Completed Sessions</h3>
-                  <p className="text-3xl font-bold text-green-600">{stats.completedSessions}</p>
-                </div>
-                <div key="average-rating" className="bg-white p-6 rounded-xl shadow-md">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Average Rating</h3>
-                  <p className="text-3xl font-bold text-purple-600">{stats.averageRating.toFixed(1)} ⭐</p>
-                </div>
-              </>
-            )}
-          </div>
-
           {/* Quick Actions */}
           <div className="bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
@@ -151,9 +64,9 @@ export default function MentorDashboard() {
                 <h3 className="font-medium text-blue-700">📅 Set Available Hours</h3>
                 <p className="text-sm text-gray-600">Update your weekly availability</p>
               </Link>
-              <Link key="review-requests" href="/mentor/booking-requests" className="p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
-                <h3 className="font-medium text-yellow-700">📝 Review Requests</h3>
-                <p className="text-sm text-gray-600">Check new booking requests</p>
+              <Link key="notifications" href="/mentor/notifications" className="p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
+                <h3 className="font-medium text-yellow-700">🔔 Notifications</h3>
+                <p className="text-sm text-gray-600">Check your notifications</p>
               </Link>
               <Link key="manage-groups" href="/mentor/groups" className="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
                 <h3 className="font-medium text-green-700">👥 Manage Groups</h3>
@@ -164,63 +77,6 @@ export default function MentorDashboard() {
                 <p className="text-sm text-gray-600">Edit your expertise and information</p>
               </Link>
             </div>
-          </div>
-
-          {/* Recent Bookings */}
-          <div className="bg-white p-6 rounded-xl shadow-md mt-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">Recent Bookings</h2>
-              <Link href="/bookings" className="text-blue-600 hover:text-blue-800">
-                View All →
-              </Link>
-            </div>
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading bookings...</p>
-              </div>
-            ) : recentBookings.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No recent bookings</p>
-            ) : (
-              <div className="space-y-4">
-                {recentBookings.map(booking => (
-                  <div key={booking._id} className="border rounded-lg p-4 hover:bg-gray-50">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold text-lg">{booking.student?.fullName || 'Unknown Student'}</h3>
-                        <p className="text-sm text-gray-600">{booking.student?.email || 'No email provided'}</p>
-                        <p className="mt-2">
-                          <span className="font-medium">Time:</span>{' '}
-                          {formatDateTime(booking.startTime)} - {formatDateTime(booking.endTime)}
-                        </p>
-                        {booking.notes && (
-                          <p className="mt-1 text-sm text-gray-600">
-                            <span className="font-medium">Notes:</span> {booking.notes}
-                          </p>
-                        )}
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-sm ${
-                        (booking.status || 'pending') === 'confirmed' ? 'bg-green-100 text-green-800' :
-                        (booking.status || 'pending') === 'cancelled' ? 'bg-red-100 text-red-800' :
-                        (booking.status || 'pending') === 'completed' ? 'bg-blue-100 text-blue-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Voice Chat Card */}
-          <div className="bg-white rounded-lg shadow-md p-6 mt-6">
-            <h3 className="text-xl font-semibold mb-4">Voice Chat</h3>
-            <p className="text-gray-600 mb-4">Join voice chat rooms for real-time communication with students.</p>
-            <Link href="/voice-chat" className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-              Go to Voice Chat
-            </Link>
           </div>
         </div>
       </div>

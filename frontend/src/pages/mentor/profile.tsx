@@ -1,13 +1,15 @@
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function MentorProfile() {
+  const router = useRouter();
   // Retrieve profile data including mentor details
   const profileData = typeof window !== 'undefined' ? JSON.parse(sessionStorage.getItem('user') || '{}') : {};
 
   // Static average rating for now
-  const averageRating = 4.0; 
+  const averageRating = 4.0;
 
   /* UN-COMMENT WHEN COMPLETE: Generate stars for visual rating
   const fullStars = Math.floor(averageRating);
@@ -19,11 +21,19 @@ export default function MentorProfile() {
     <ProtectedRoute allowedRoles={['mentor']}>
       <div className="min-h-screen flex flex-col items-center bg-gray-100 p-8">
         <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-3xl">
-          {/* Profile Header */}
-          <h1 className="text-2xl font-bold text-blue-700 mb-4 text-center">
-            Mentor Profile
-          </h1>
-          
+          <div className="flex justify-between items-center mb-6">
+            <button
+              onClick={() => router.push('/mentor/dashboard')}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+            >
+              ← Back to Dashboard
+            </button>
+            <h1 className="text-2xl font-bold text-blue-700">
+              Mentor Profile
+            </h1>
+            <div className="w-24"></div> {/* Placeholder element to keep title centered */}
+          </div>
+
           {/* Profile Basic Info */}
           <div className="space-y-2 mb-4">
             <p><strong>Full Name:</strong> {profileData.fullName || 'Not provided'}</p>
