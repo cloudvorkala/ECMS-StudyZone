@@ -16,6 +16,16 @@ interface MentorProfile {
   institution: string;
 }
 
+interface ProfileResponse {
+  fullName: string;
+  email: string;
+  phone: string;
+  degree: string;
+  specialty: string;
+  expertise: string[];
+  institution: string;
+}
+
 export default function MentorEditProfile() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -37,19 +47,18 @@ export default function MentorEditProfile() {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const userData = sessionStorage.getItem('user');
-        if (userData) {
-          const parsedData = JSON.parse(userData);
-          setProfile({
-            fullName: parsedData.fullName || '',
-            email: parsedData.email || '',
-            phone: parsedData.phone || '',
-            degree: parsedData.degree || '',
-            specialty: parsedData.specialty || '',
-            expertise: parsedData.expertise || [],
-            institution: parsedData.institution || ''
-          });
-        }
+        const response = await api.get<ProfileResponse>('/users/mentor/profile');
+        const profileData = response.data;
+
+        setProfile({
+          fullName: profileData.fullName || '',
+          email: profileData.email || '',
+          phone: profileData.phone || '',
+          degree: profileData.degree || '',
+          specialty: profileData.specialty || '',
+          expertise: profileData.expertise || [],
+          institution: profileData.institution || ''
+        });
       } catch (err) {
         console.error('Error loading profile:', err);
         setError('Failed to load profile data');

@@ -1,21 +1,73 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import api from '@/services/api';
+
+interface MentorProfile {
+  fullName: string;
+  email: string;
+  phone: string;
+  degree: string;
+  specialty: string;
+  expertise: string[];
+  institution: string;
+  role: string;
+}
+
+interface ProfileResponse {
+  fullName: string;
+  email: string;
+  phone: string;
+  degree: string;
+  specialty: string;
+  expertise: string[];
+  institution: string;
+  role: string;
+}
 
 export default function MentorProfile() {
   const router = useRouter();
-  // Retrieve profile data including mentor details
-  const profileData = typeof window !== 'undefined' ? JSON.parse(sessionStorage.getItem('user') || '{}') : {};
+  const [loading, setLoading] = useState(true);
+  const [profileData, setProfileData] = useState<MentorProfile>({
+    fullName: '',
+    email: '',
+    phone: '',
+    degree: '',
+    specialty: '',
+    expertise: [],
+    institution: '',
+    role: ''
+  });
 
   // Static average rating for now
   const averageRating = 4.0;
 
-  /* UN-COMMENT WHEN COMPLETE: Generate stars for visual rating
-  const fullStars = Math.floor(averageRating);
-  const halfStar = averageRating % 1 !== 0 ? 1 : 0;
-  const emptyStars = 5 - fullStars - halfStar;
-  */
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const response = await api.get<ProfileResponse>('/users/mentor/profile');
+        setProfileData(response.data);
+      } catch (err) {
+        console.error('Error loading profile:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ProtectedRoute allowedRoles={['mentor']}>

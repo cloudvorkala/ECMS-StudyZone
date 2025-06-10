@@ -117,6 +117,39 @@ export class UsersController {
     }
   }
 
+  @Get('mentor/profile')
+  @UseGuards(JwtAuthGuard)
+  async getMentorProfile(@Request() req) {
+    try {
+      const user = await this.usersService.findById(req.user.id);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      return {
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        degree: user.degree,
+        specialty: user.specialty,
+        expertise: user.expertise,
+        institution: user.institution,
+        role: user.role
+      };
+    } catch (error) {
+      console.error('Error getting mentor profile:', error);
+      if (error instanceof Error) {
+        throw new HttpException(
+          error.message,
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      throw new HttpException(
+        'Failed to get profile',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   @Put('mentor/profile')
   @Roles('mentor')
   async updateMentorProfile(@Request() req, @Body() updateData: Partial<User>) {
