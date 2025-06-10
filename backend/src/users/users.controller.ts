@@ -84,6 +84,39 @@ export class UsersController {
     return this.usersService.findByRole(UserRole.STUDENT);
   }
 
+  @Get('student/profile')
+  @UseGuards(JwtAuthGuard)
+  async getStudentProfile(@Request() req) {
+    try {
+      const user = await this.usersService.findById(req.user.id);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      return {
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        degree: user.degree,
+        major: user.major,
+        year: user.year,
+        institution: user.institution,
+        interests: user.interests
+      };
+    } catch (error) {
+      console.error('Error getting student profile:', error);
+      if (error instanceof Error) {
+        throw new HttpException(
+          error.message,
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      throw new HttpException(
+        'Failed to get profile',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   @Put('mentor/profile')
   @Roles('mentor')
   async updateMentorProfile(@Request() req, @Body() updateData: Partial<User>) {

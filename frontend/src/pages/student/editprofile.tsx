@@ -14,6 +14,17 @@ interface StudentProfile {
   interests: string[];
 }
 
+interface ProfileResponse {
+  fullName: string;
+  email: string;
+  phone: string;
+  degree: string;
+  major: string;
+  year: string;
+  institution: string;
+  interests: string[];
+}
+
 interface ErrorResponse {
   data?: {
     message?: string;
@@ -42,20 +53,19 @@ export default function StudentEditProfile() {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const userData = sessionStorage.getItem('user');
-        if (userData) {
-          const parsedData = JSON.parse(userData);
-          setProfile({
-            fullName: parsedData.fullName || '',
-            email: parsedData.email || '',
-            phone: parsedData.phone || '',
-            degree: parsedData.degree || '',
-            major: parsedData.major || '',
-            year: parsedData.year || '',
-            institution: parsedData.institution || '',
-            interests: parsedData.interests || []
-          });
-        }
+        const response = await api.get<ProfileResponse>('/users/student/profile');
+        const profileData = response.data;
+
+        setProfile({
+          fullName: profileData.fullName || '',
+          email: profileData.email || '',
+          phone: profileData.phone || '',
+          degree: profileData.degree || '',
+          major: profileData.major || '',
+          year: profileData.year || '',
+          institution: profileData.institution || '',
+          interests: profileData.interests || []
+        });
       } catch (err) {
         console.error('Error loading profile:', err);
         setError('Failed to load profile data');
